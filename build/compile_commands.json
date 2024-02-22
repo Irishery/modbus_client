@@ -1,7 +1,7 @@
 [
 {
-  "directory": "/home/kir/ardustuff/build",
-  "command": "/usr/bin/c++  -I/home/kir/ardustuff/inc -I/home/kir/ardustuff/libs/libmodbus-3.1.10/src -g -std=c++17 -o CMakeFiles/intro_oop.dir/main.cpp.o -c /home/kir/ardustuff/main.cpp",
-  "file": "/home/kir/ardustuff/main.cpp"
+  "directory": "/home/kir/modbus_client/build",
+  "command": "/usr/bin/c++  -I/home/kir/modbus_client/inc -I/home/kir/modbus_client/src -I/home/kir/modbus_client/libs/libmodbus-3.1.10/src -g -std=c++17 -o CMakeFiles/intro_oop.dir/src/main.cpp.o -c /home/kir/modbus_client/src/main.cpp",
+  "file": "/home/kir/modbus_client/src/main.cpp"
 }
 ]

@@ -10,14 +10,14 @@
 				{
 					"includeDirectories" : 
 					[
-						"/usr/lib/gcc/x86_64-linux-gnu/11/include",
+						"/usr/lib/gcc/x86_64-linux-gnu/12/include",
 						"/usr/local/include",
 						"/usr/include/x86_64-linux-gnu",
 						"/usr/include"
 					],
 					"linkDirectories" : 
 					[
-						"/usr/lib/gcc/x86_64-linux-gnu/11",
+						"/usr/lib/gcc/x86_64-linux-gnu/12",
 						"/usr/lib/x86_64-linux-gnu",
 						"/usr/lib",
 						"/lib/x86_64-linux-gnu",
@@ -33,8 +33,8 @@
 						"gcc_s"
 					]
 				},
-				"path" : "/usr/bin/c89-gcc",
-				"version" : "11.4.0"
+				"path" : "/usr/bin/gcc-12",
+				"version" : "12.3.0"
 			},
 			"language" : "C",
 			"sourceFileExtensions" : 

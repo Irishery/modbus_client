@@ -4,7 +4,7 @@
 # compile CXX with /usr/bin/c++
 CXX_DEFINES = 
 
-CXX_INCLUDES = -I/home/kir/ardustuff/inc -I/home/kir/ardustuff/libs/libmodbus-3.1.10/src
+CXX_INCLUDES = -I/home/kir/modbus_client/inc -I/home/kir/modbus_client/src -I/home/kir/modbus_client/libs/libmodbus-3.1.10/src
 
 CXX_FLAGS = -g -std=c++17
 

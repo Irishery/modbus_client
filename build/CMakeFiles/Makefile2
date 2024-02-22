@@ -54,10 +54,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/kir/ardustuff
+CMAKE_SOURCE_DIR = /home/kir/modbus_client
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/kir/ardustuff/build
+CMAKE_BINARY_DIR = /home/kir/modbus_client/build
 
 #=============================================================================
 # Directory level rules for the build root directory
@@ -81,14 +81,14 @@ clean: CMakeFiles/intro_oop.dir/clean
 CMakeFiles/intro_oop.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/intro_oop.dir/build.make CMakeFiles/intro_oop.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/intro_oop.dir/build.make CMakeFiles/intro_oop.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/kir/ardustuff/build/CMakeFiles --progress-num=1,2 "Built target intro_oop"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/kir/modbus_client/build/CMakeFiles --progress-num=1,2 "Built target intro_oop"
 .PHONY : CMakeFiles/intro_oop.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/intro_oop.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/kir/ardustuff/build/CMakeFiles 2
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/kir/modbus_client/build/CMakeFiles 2
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/intro_oop.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/kir/ardustuff/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/kir/modbus_client/build/CMakeFiles 0
 .PHONY : CMakeFiles/intro_oop.dir/rule
 
 # Convenience name for target.

@@ -27,19 +27,19 @@
 			{
 				"command" : 0,
 				"file" : 0,
-				"line" : 18,
+				"line" : 22,
 				"parent" : 0
 			},
 			{
 				"command" : 1,
 				"file" : 0,
-				"line" : 20,
+				"line" : 25,
 				"parent" : 0
 			},
 			{
 				"command" : 2,
 				"file" : 0,
-				"line" : 21,
+				"line" : 26,
 				"parent" : 0
 			},
 			{
@@ -52,6 +52,12 @@
 				"command" : 3,
 				"file" : 0,
 				"line" : 16,
+				"parent" : 0
+			},
+			{
+				"command" : 3,
+				"file" : 0,
+				"line" : 17,
 				"parent" : 0
 			}
 		]
@@ -72,11 +78,15 @@
 			[
 				{
 					"backtrace" : 4,
-					"path" : "/home/kir/ardustuff/inc"
+					"path" : "/home/kir/modbus_client/inc"
 				},
 				{
 					"backtrace" : 5,
-					"path" : "/home/kir/ardustuff/libs/libmodbus-3.1.10/src"
+					"path" : "/home/kir/modbus_client/src"
+				},
+				{
+					"backtrace" : 6,
+					"path" : "/home/kir/modbus_client/libs/libmodbus-3.1.10/src"
 				}
 			],
 			"language" : "CXX",
@@ -109,11 +119,11 @@
 			},
 			{
 				"backtrace" : 2,
-				"fragment" : "-L/home/kir/ardustuff/libs/libmodbus-3.1.10/src/.libs",
+				"fragment" : "-L/home/kir/modbus_client/libs/libmodbus-3.1.10/src/.libs",
 				"role" : "libraryPath"
 			},
 			{
-				"fragment" : "-Wl,-rpath,/home/kir/ardustuff/libs/libmodbus-3.1.10/src/.libs",
+				"fragment" : "-Wl,-rpath,/home/kir/modbus_client/libs/libmodbus-3.1.10/src/.libs",
 				"role" : "libraries"
 			},
 			{
@@ -139,6 +149,13 @@
 			[
 				0
 			]
+		},
+		{
+			"name" : "Header Files",
+			"sourceIndexes" : 
+			[
+				1
+			]
 		}
 	],
 	"sources" : 
@@ -146,8 +163,13 @@
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "main.cpp",
+			"path" : "src/main.cpp",
 			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/entities.h",
+			"sourceGroupIndex" : 1
 		}
 	],
 	"type" : "EXECUTABLE"

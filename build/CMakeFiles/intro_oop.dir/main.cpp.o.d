@@ -1,4 +1,4 @@
-CMakeFiles/intro_oop.dir/main.cpp.o: /home/kir/ardustuff/main.cpp \
+CMakeFiles/intro_oop.dir/main.cpp.o: /home/kir/modbus_client/main.cpp \
  /usr/include/stdc-predef.h /usr/include/c++/11/cerrno \
  /usr/include/x86_64-linux-gnu/c++/11/bits/c++config.h \
  /usr/include/x86_64-linux-gnu/c++/11/bits/os_defines.h \
@@ -31,7 +31,7 @@ CMakeFiles/intro_oop.dir/main.cpp.o: /home/kir/ardustuff/main.cpp \
  /usr/include/x86_64-linux-gnu/bits/stdio_lim.h \
  /usr/include/x86_64-linux-gnu/bits/floatn.h \
  /usr/include/x86_64-linux-gnu/bits/floatn-common.h \
- /home/kir/ardustuff/libs/libmodbus-3.1.10/src/modbus.h \
+ /home/kir/modbus_client/libs/libmodbus-3.1.10/src/modbus.h \
  /usr/include/x86_64-linux-gnu/sys/param.h \
  /usr/include/x86_64-linux-gnu/sys/types.h \
  /usr/include/x86_64-linux-gnu/bits/types/clock_t.h \
@@ -98,10 +98,10 @@ CMakeFiles/intro_oop.dir/main.cpp.o: /home/kir/ardustuff/main.cpp \
  /usr/lib/gcc/x86_64-linux-gnu/11/include/stdint.h /usr/include/stdint.h \
  /usr/include/x86_64-linux-gnu/bits/wchar.h \
  /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h \
- /home/kir/ardustuff/libs/libmodbus-3.1.10/src/modbus-version.h \
- /home/kir/ardustuff/libs/libmodbus-3.1.10/src/modbus-rtu.h \
- /home/kir/ardustuff/libs/libmodbus-3.1.10/src/modbus.h \
- /home/kir/ardustuff/libs/libmodbus-3.1.10/src/modbus-tcp.h \
+ /home/kir/modbus_client/libs/libmodbus-3.1.10/src/modbus-version.h \
+ /home/kir/modbus_client/libs/libmodbus-3.1.10/src/modbus-rtu.h \
+ /home/kir/modbus_client/libs/libmodbus-3.1.10/src/modbus.h \
+ /home/kir/modbus_client/libs/libmodbus-3.1.10/src/modbus-tcp.h \
  /usr/include/c++/11/iostream /usr/include/c++/11/ostream \
  /usr/include/c++/11/ios /usr/include/c++/11/iosfwd \
  /usr/include/c++/11/bits/stringfwd.h \
@@ -190,4 +190,5 @@ CMakeFiles/intro_oop.dir/main.cpp.o: /home/kir/ardustuff/main.cpp \
  /usr/include/c++/11/bits/locale_facets.tcc \
  /usr/include/c++/11/bits/basic_ios.tcc \
  /usr/include/c++/11/bits/ostream.tcc /usr/include/c++/11/istream \
- /usr/include/c++/11/bits/istream.tcc
+ /usr/include/c++/11/bits/istream.tcc /usr/include/c++/11/array \
+ /usr/include/c++/11/utility /usr/include/c++/11/bits/stl_relops.h

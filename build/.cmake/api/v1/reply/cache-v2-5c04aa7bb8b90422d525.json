@@ -55,7 +55,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "/home/kir/ardustuff/build"
+			"value" : "/home/kir/modbus_client/build"
 		},
 		{
 			"name" : "CMAKE_CACHE_MAJOR_VERSION",
@@ -175,7 +175,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "CMAKE_CXX_COMPILER_AR-NOTFOUND"
+			"value" : "/usr/bin/gcc-ar-11"
 		},
 		{
 			"name" : "CMAKE_CXX_COMPILER_RANLIB",
@@ -191,7 +191,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "CMAKE_CXX_COMPILER_RANLIB-NOTFOUND"
+			"value" : "/usr/bin/gcc-ranlib-11"
 		},
 		{
 			"name" : "CMAKE_CXX_FLAGS",
@@ -287,7 +287,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "/usr/bin/c89-gcc"
+			"value" : "/usr/bin/gcc-12"
 		},
 		{
 			"name" : "CMAKE_C_COMPILER_AR",
@@ -303,7 +303,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "CMAKE_C_COMPILER_AR-NOTFOUND"
+			"value" : "/usr/bin/gcc-ar-12"
 		},
 		{
 			"name" : "CMAKE_C_COMPILER_RANLIB",
@@ -319,7 +319,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "CMAKE_C_COMPILER_RANLIB-NOTFOUND"
+			"value" : "/usr/bin/gcc-ranlib-12"
 		},
 		{
 			"name" : "CMAKE_C_FLAGS",
@@ -591,7 +591,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "/home/kir/ardustuff"
+			"value" : "/home/kir/modbus_client"
 		},
 		{
 			"name" : "CMAKE_INSTALL_PREFIX",
@@ -1127,7 +1127,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "/home/kir/ardustuff/build"
+			"value" : "/home/kir/modbus_client/build"
 		},
 		{
 			"name" : "intro_oop_IS_TOP_LEVEL",
@@ -1151,7 +1151,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "/home/kir/ardustuff"
+			"value" : "/home/kir/modbus_client"
 		}
 	],
 	"kind" : "cache",

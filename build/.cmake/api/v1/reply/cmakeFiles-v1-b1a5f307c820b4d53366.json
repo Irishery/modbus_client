@@ -125,8 +125,8 @@
 	"kind" : "cmakeFiles",
 	"paths" : 
 	{
-		"build" : "/home/kir/ardustuff/build",
-		"source" : "/home/kir/ardustuff"
+		"build" : "/home/kir/modbus_client/build",
+		"source" : "/home/kir/modbus_client"
 	},
 	"version" : 
 	{

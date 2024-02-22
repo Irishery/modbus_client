@@ -13,9 +13,14 @@ set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 
 # Подключить header-файлы
 include_directories("inc")
+include_directories("src")
 include_directories("libs/libmodbus-3.1.10/src/")
 # Сказать программе, что должен быть исполняемый файл
-add_executable("${PROJECT_NAME}" main.cpp)
+# file(GLOB SOURCES "src/*.cpp")
+# file(GLOB LIBS "src/*.h")
+
+add_executable("${PROJECT_NAME}" "src/main.cpp" "src/entities.h")
+
 
 target_link_directories("${PROJECT_NAME}" PUBLIC "libs/libmodbus-3.1.10/src/.libs/")
 target_link_libraries("${PROJECT_NAME}" "modbus")
