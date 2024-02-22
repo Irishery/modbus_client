@@ -1,0 +1,3 @@
+/home/kir/ardustuff/build/CMakeFiles/intro_oop.dir
+/home/kir/ardustuff/build/CMakeFiles/edit_cache.dir
+/home/kir/ardustuff/build/CMakeFiles/rebuild_cache.dir

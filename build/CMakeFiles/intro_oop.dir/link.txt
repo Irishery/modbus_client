@@ -1,0 +1,1 @@
+/usr/bin/c++ -g CMakeFiles/intro_oop.dir/main.cpp.o -o intro_oop   -L/home/kir/ardustuff/libs/libmodbus-3.1.10/src/.libs  -Wl,-rpath,/home/kir/ardustuff/libs/libmodbus-3.1.10/src/.libs -lmodbus 
