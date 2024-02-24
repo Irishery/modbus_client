@@ -835,7 +835,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "intro_oop"
+			"value" : "modbus_client"
 		},
 		{
 			"name" : "CMAKE_RANLIB",
@@ -1143,6 +1143,42 @@
 		},
 		{
 			"name" : "intro_oop_SOURCE_DIR",
+			"properties" : 
+			[
+				{
+					"name" : "HELPSTRING",
+					"value" : "Value Computed by CMake"
+				}
+			],
+			"type" : "STATIC",
+			"value" : "/home/kir/modbus_client"
+		},
+		{
+			"name" : "modbus_client_BINARY_DIR",
+			"properties" : 
+			[
+				{
+					"name" : "HELPSTRING",
+					"value" : "Value Computed by CMake"
+				}
+			],
+			"type" : "STATIC",
+			"value" : "/home/kir/modbus_client/build"
+		},
+		{
+			"name" : "modbus_client_IS_TOP_LEVEL",
+			"properties" : 
+			[
+				{
+					"name" : "HELPSTRING",
+					"value" : "Value Computed by CMake"
+				}
+			],
+			"type" : "STATIC",
+			"value" : "ON"
+		},
+		{
+			"name" : "modbus_client_SOURCE_DIR",
 			"properties" : 
 			[
 				{

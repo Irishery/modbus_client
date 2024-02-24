@@ -2,7 +2,7 @@
 	"artifacts" : 
 	[
 		{
-			"path" : "intro_oop"
+			"path" : "modbus_client"
 		}
 	],
 	"backtrace" : 1,
@@ -27,19 +27,19 @@
 			{
 				"command" : 0,
 				"file" : 0,
-				"line" : 22,
+				"line" : 27,
 				"parent" : 0
 			},
 			{
 				"command" : 1,
 				"file" : 0,
-				"line" : 25,
+				"line" : 33,
 				"parent" : 0
 			},
 			{
 				"command" : 2,
 				"file" : 0,
-				"line" : 26,
+				"line" : 34,
 				"parent" : 0
 			},
 			{
@@ -52,12 +52,6 @@
 				"command" : 3,
 				"file" : 0,
 				"line" : 16,
-				"parent" : 0
-			},
-			{
-				"command" : 3,
-				"file" : 0,
-				"line" : 17,
 				"parent" : 0
 			}
 		]
@@ -78,14 +72,10 @@
 			[
 				{
 					"backtrace" : 4,
-					"path" : "/home/kir/modbus_client/inc"
+					"path" : "/home/kir/modbus_client/headers"
 				},
 				{
 					"backtrace" : 5,
-					"path" : "/home/kir/modbus_client/src"
-				},
-				{
-					"backtrace" : 6,
 					"path" : "/home/kir/modbus_client/libs/libmodbus-3.1.10/src"
 				}
 			],
@@ -104,7 +94,7 @@
 			]
 		}
 	],
-	"id" : "intro_oop::@6890427a1f51a3e7e1df",
+	"id" : "modbus_client::@6890427a1f51a3e7e1df",
 	"link" : 
 	{
 		"commandFragments" : 
@@ -134,8 +124,8 @@
 		],
 		"language" : "CXX"
 	},
-	"name" : "intro_oop",
-	"nameOnDisk" : "intro_oop",
+	"name" : "modbus_client",
+	"nameOnDisk" : "modbus_client",
 	"paths" : 
 	{
 		"build" : ".",
@@ -168,7 +158,7 @@
 		},
 		{
 			"backtrace" : 1,
-			"path" : "src/entities.h",
+			"path" : "headers/entities.h",
 			"sourceGroupIndex" : 1
 		}
 	],

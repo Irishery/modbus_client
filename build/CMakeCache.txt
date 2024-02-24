@@ -144,7 +144,7 @@ CMAKE_PROJECT_DESCRIPTION:STATIC=
 CMAKE_PROJECT_HOMEPAGE_URL:STATIC=
 
 //Value Computed by CMake
-CMAKE_PROJECT_NAME:STATIC=intro_oop
+CMAKE_PROJECT_NAME:STATIC=modbus_client
 
 //Path to a program.
 CMAKE_RANLIB:FILEPATH=/usr/bin/ranlib
@@ -216,6 +216,15 @@ intro_oop_IS_TOP_LEVEL:STATIC=ON
 
 //Value Computed by CMake
 intro_oop_SOURCE_DIR:STATIC=/home/kir/modbus_client
+
+//Value Computed by CMake
+modbus_client_BINARY_DIR:STATIC=/home/kir/modbus_client/build
+
+//Value Computed by CMake
+modbus_client_IS_TOP_LEVEL:STATIC=ON
+
+//Value Computed by CMake
+modbus_client_SOURCE_DIR:STATIC=/home/kir/modbus_client
 
 
 ########################

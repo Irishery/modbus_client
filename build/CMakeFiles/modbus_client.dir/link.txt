@@ -1,0 +1,1 @@
+/usr/bin/c++ -g CMakeFiles/modbus_client.dir/src/main.cpp.o -o modbus_client   -L/home/kir/modbus_client/libs/libmodbus-3.1.10/src/.libs  -Wl,-rpath,/home/kir/modbus_client/libs/libmodbus-3.1.10/src/.libs -lmodbus 

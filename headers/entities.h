@@ -37,6 +37,8 @@ ModbusClient::ModbusClient(const char *port) {
         modbus_free(ctx);
         return;
     }
+
+    this -> setSlave(1);
 };
 
 void ModbusClient::setSlave(int slave) {
@@ -46,6 +48,7 @@ void ModbusClient::setSlave(int slave) {
 uint16_t* ModbusClient::readRegisters(int address, int count) {
     uint16_t *tab_reg = (uint16_t *) malloc(sizeof(uint16_t) * count);
     modbus_read_registers(this -> ctx, address, count, tab_reg);
+
     return tab_reg;
 };
 
@@ -69,12 +72,11 @@ int ModbusClient::writeBit(int address, int status) {
 
 class Stepper {
     private:
-        ModbusClient *client;
 
         void set_rotation_degree(int degree);
 
-
     public:
+        ModbusClient *client;
         Stepper(ModbusClient *client);
 
         void rotate(int degree);
