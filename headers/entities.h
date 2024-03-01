@@ -4,6 +4,8 @@
 #include <iostream>
 #include <array>
 
+#define PI 3.14159265359
+
 // ------------ Modbus Client ------------
 class ModbusClient {
     private:
@@ -72,31 +74,53 @@ int ModbusClient::writeBit(int address, int status) {
 
 class Stepper {
     private:
+        void setRotationDegree(double radian);
 
-        void set_rotation_degree(int degree);
+        double radiansToDegrees(double radian);
 
     public:
         ModbusClient *client;
         Stepper(ModbusClient *client);
 
-        void rotate(int degree);
+        void rotate(double degree);
 };
 
 Stepper::Stepper(ModbusClient *client) {
     this -> client = client;
 };
 
-void Stepper::set_rotation_degree(int degree) {
-    int succes = this -> client -> writeRegister(4, degree);
+double Stepper::radiansToDegrees(double radian) {
+    return (radian * (180 / PI));
+};
+
+
+void Stepper::setRotationDegree(double radian) {
+
+    int succes = this -> client -> writeRegister(4, this -> radiansToDegrees(radian));
     if (succes == -1) {
         std::cout << "Error writing register" << std::endl;
     }
 };
 
-void Stepper::rotate(int degree) {
-    this -> set_rotation_degree(degree);
+void Stepper::rotate(double radian) {
+    this -> setRotationDegree(radian);
     int succes = this -> client -> writeBit(0, 1);
     if (succes == -1) {
         std::cout << "Error writing bit" << std::endl;
     }
 };
+
+
+// // ------------ Stepper Group ------------
+// class StepperGroup {
+//     private:
+//         std::array<Stepper*, 20> stepper_group;
+
+//     public:
+//         StepperGroup(ModbusClient *client);
+
+//         int stepper_count;
+        
+//         std::array<int, 20> stepper_ids;
+
+// };
