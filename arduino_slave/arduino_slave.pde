@@ -126,15 +126,7 @@ void setup()
   regBank.add(40039);
   regBank.add(40040);
 
-  // request to write
-  regBank.add(40041); // register id
-  regBank.add(40042); // value
-  regBank.add(40043); // flag is request new or not
 
-  // request to run
-  regBank.add(40047);
-  regBank.add(40048);
-  regBank.add(40049);
 /*
 Assign the modbus device object to the protocol handler
 This is where the protocol handler will look to read and write
@@ -163,6 +155,10 @@ void loop()
     } else {
       regBank.set(i + 1, 0);
     }
+
+    float current_pos = steppers[i].getCurrentDeg();
+    regBank.set(30000 + i + 1, current_pos);
+
   }
 
   slave.run();

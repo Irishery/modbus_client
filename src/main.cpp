@@ -13,4 +13,7 @@ int main(void)
 
     stepper1->rotate(PI);
     stepper2->rotate(2 * PI);
+
+    float current_pos = stepper1->getCurrentPosition();
+    std::cout << "Current position: " << current_pos << std::endl;
 }
