@@ -4,6 +4,7 @@
 #include <iostream>
 #include <array>
 #include "entities.h"
+// #include <math.h>
 
 int main(void)
 {
@@ -15,5 +16,5 @@ int main(void)
     stepper2->rotate(2 * PI);
 
     float current_pos = stepper1->getCurrentPosition();
-    std::cout << "Current position: " << current_pos << std::endl;
+    std::cout << "Current position: " << fmod(current_pos, 360.0) << std::endl;
 }

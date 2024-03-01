@@ -3,9 +3,10 @@
 #include <modbus.h>
 #include <iostream>
 #include <array>
+#include <math.h>
 
+// #define PI 3.14159265358979323
 #define PI 3.14159265359
-
 // ------------ Modbus Client ------------
 class ModbusClient
 {
@@ -67,8 +68,7 @@ uint16_t *ModbusClient::readInputRegisters(int address, int count)
     return tab_reg;
 };
 
-    int
-    ModbusClient::writeRegister(int address, int value)
+int ModbusClient::writeRegister(int address, int value)
 {
     int success = modbus_write_register(this->ctx, address, value); // 1|-1
     return success;
@@ -139,7 +139,7 @@ void Stepper::rotate(float radian)
 
 float Stepper::getCurrentPosition()
 {
-    uint16_t *position = this->client->readInputRegisters(this->stepper_id, 1);
+    uint16_t *position = this->client->readInputRegisters(this->stepper_id, 2);
     return modbus_get_float(position);
 };
 

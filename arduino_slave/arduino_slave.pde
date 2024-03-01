@@ -156,8 +156,16 @@ void loop()
       regBank.set(i + 1, 0);
     }
 
-    float current_pos = steppers[i].getCurrentDeg();
-    regBank.set(30000 + i + 1, current_pos);
+    union {
+      float asFloat;
+      int asInt[2];
+    }
+    flreg;
+
+
+    flreg.asFloat = steppers[0].getCurrentDeg();
+    regBank.set(30000 + 1, flreg.asInt[0]);
+    regBank.set(30000 + 1 + 1, flreg.asInt[1]);
 
   }
 
