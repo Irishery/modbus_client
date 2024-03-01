@@ -8,7 +8,9 @@
 int main(void)
 {
     ModbusClient *client = new ModbusClient("/dev/ttyUSB0");
-    Stepper *stepper = new Stepper(client);
+    Stepper *stepper1 = new Stepper(0, client);
+    Stepper *stepper2 = new Stepper(1, client);
 
-    stepper->rotate(2*PI);
+    stepper1->rotate(PI);
+    stepper2->rotate(2 * PI);
 }

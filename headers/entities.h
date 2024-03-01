@@ -79,13 +79,16 @@ class Stepper {
         double radiansToDegrees(double radian);
 
     public:
+        int stepper_id;
+
         ModbusClient *client;
-        Stepper(ModbusClient *client);
+        Stepper(int id, ModbusClient *client);
 
         void rotate(double degree);
 };
 
-Stepper::Stepper(ModbusClient *client) {
+Stepper::Stepper(int id, ModbusClient *client) {
+    this -> stepper_id = id;
     this -> client = client;
 };
 
@@ -96,7 +99,7 @@ double Stepper::radiansToDegrees(double radian) {
 
 void Stepper::setRotationDegree(double radian) {
 
-    int succes = this -> client -> writeRegister(4, this -> radiansToDegrees(radian));
+    int succes = this -> client -> writeRegister(this -> stepper_id, this -> radiansToDegrees(radian));
     if (succes == -1) {
         std::cout << "Error writing register" << std::endl;
     }
@@ -104,7 +107,7 @@ void Stepper::setRotationDegree(double radian) {
 
 void Stepper::rotate(double radian) {
     this -> setRotationDegree(radian);
-    int succes = this -> client -> writeBit(0, 1);
+    int succes = this -> client -> writeBit(this -> stepper_id, 1);
     if (succes == -1) {
         std::cout << "Error writing bit" << std::endl;
     }
