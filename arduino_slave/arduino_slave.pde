@@ -23,7 +23,6 @@ void setup()
 
   stepper1.setRunMode(FOLLOW_POS);
   stepper1.setMaxSpeed(120);
-  stepper1.setAcceleration(500);
   stepper1.autoPower(true);
   //stepper1.autoPower(true);
 
@@ -49,16 +48,6 @@ void setup()
   regBank.add(18);
   regBank.add(19);
   regBank.add(20);
-
-  regBank.add(10001);
-  regBank.add(10002);
-  regBank.add(10003);
-  regBank.add(10004);
-  regBank.add(10005);
-  regBank.add(10006);
-  regBank.add(10007);
-  regBank.add(10008);
-
 
 // current position
   regBank.add(30001);
@@ -104,7 +93,7 @@ void setup()
   regBank.add(40019);
   regBank.add(40020);
 
-// current angle
+// rotation degree
   regBank.add(40021);
   regBank.add(40022);
   regBank.add(40023);
@@ -126,6 +115,27 @@ void setup()
   regBank.add(40039);
   regBank.add(40040);
 
+// acceleration speed
+  regBank.add(40041);
+  regBank.add(40042);
+  regBank.add(40043);
+  regBank.add(40044);
+  regBank.add(40045);
+  regBank.add(40046);
+  regBank.add(40047);
+  regBank.add(40048);
+  regBank.add(40049);
+  regBank.add(40050);
+  regBank.add(40051);
+  regBank.add(40052);
+  regBank.add(40053);
+  regBank.add(40054);
+  regBank.add(40055);
+  regBank.add(40056);
+  regBank.add(40057);
+  regBank.add(40058);
+  regBank.add(40059);
+  regBank.add(40060);
 
 /*
 Assign the modbus device object to the protocol handler
@@ -141,12 +151,17 @@ only have one device assigned to it.
 
 GStepper<STEPPER2WIRE> steppers[] = {stepper1, stepper2};
 
-
 void loop()
 {
   for (int i = 0; i < steppers_count; i++) {
     int is_must_run = regBank.get(i + 1);
-    int degree = regBank.get(40000 + i + 1);
+
+    float acceleration = regBank.get(40040 + i + 1);
+    float speed = regBank.get(40000 + i + 1);
+    int degree = regBank.get(40020 + i + 1);
+
+    steppers[i].setAcceleration(acceleration);
+    steppers[i].setMaxSpeedDeg(speed);
 
     if (!steppers[i].tick()) {
       if (is_must_run) {

@@ -120,6 +120,7 @@ public:
 
     void setRotationDegree(float radian);
     void setMaxSpeed(float rad_per_sec);
+    void setAcceleration(float rad_per_sec_sq);
 
     void rotate(float degree);
     float getCurrentPosition();
@@ -149,6 +150,15 @@ void Stepper::setRotationDegree(float radian)
 void Stepper::setMaxSpeed(float rad_per_sec)
 {
     int succes = this->client->writeRegister(this->stepper_id, this->radiansToDegrees(rad_per_sec));
+    if (succes == -1)
+    {
+        std::cout << "Error writing register" << std::endl;
+    }
+};
+
+void Stepper::setAcceleration(float rad_per_sec_sq)
+{
+    int succes = this->client->writeRegister(this->stepper_id + 40, this->radiansToDegrees(rad_per_sec_sq));
     if (succes == -1)
     {
         std::cout << "Error writing register" << std::endl;
