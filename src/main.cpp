@@ -12,6 +12,9 @@ int main(void)
     Stepper *stepper1 = new Stepper(0, client);
     Stepper *stepper2 = new Stepper(1, client);
 
+    stepper1->setMaxSpeed(1);
+    stepper2->setMaxSpeed(2*PI);
+
     stepper1->rotate(PI);
     stepper2->rotate(2 * PI);
 

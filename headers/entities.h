@@ -7,6 +7,24 @@
 
 // #define PI 3.14159265358979323
 #define PI 3.14159265359
+
+// ------------ Registers scheme ------------
+
+// - **Rotation 1|0 Registers (1-20)**: 
+// These registers related to the rotation control with values ranging from 1 to 20. 
+ 
+// - **Current Position Registers (30001-30020)**:
+// These registers store the current positions of certain elements or components, with values ranging from 30001 to 30020. 
+ 
+// - **Current Speed Registers (40001-40020)**:
+// These registers hold the current speed values of the system, with values ranging from 40001 to 40020. 
+ 
+// - **Rotation Degree Registers (40021-40040)**:
+// These registers used to store the rotation degrees of specific components, with values ranging from 40021 to 40040.  
+
+// - **Acceleration Speed Registers (40041-40060)**:
+// These registers dedicated to storing the acceleration speeds of the system, with values ranging from 40041 to 40060. 
+
 // ------------ Modbus Client ------------
 class ModbusClient
 {
@@ -92,8 +110,6 @@ int ModbusClient::writeBit(int address, int status)
 class Stepper
 {
 private:
-    void setRotationDegree(float radian);
-
     float radiansToDegrees(float radian);
 
 public:
@@ -101,6 +117,9 @@ public:
 
     ModbusClient *client;
     Stepper(int id, ModbusClient *client);
+
+    void setRotationDegree(float radian);
+    void setMaxSpeed(float rad_per_sec);
 
     void rotate(float degree);
     float getCurrentPosition();
@@ -120,7 +139,16 @@ float Stepper::radiansToDegrees(float radian)
 void Stepper::setRotationDegree(float radian)
 {
 
-    int succes = this->client->writeRegister(this->stepper_id, this->radiansToDegrees(radian));
+    int succes = this->client->writeRegister(this->stepper_id + 20, this->radiansToDegrees(radian)); // add 20 because of registers scheme
+    if (succes == -1)
+    {
+        std::cout << "Error writing register" << std::endl;
+    }
+};
+
+void Stepper::setMaxSpeed(float rad_per_sec)
+{
+    int succes = this->client->writeRegister(this->stepper_id, this->radiansToDegrees(rad_per_sec));
     if (succes == -1)
     {
         std::cout << "Error writing register" << std::endl;
