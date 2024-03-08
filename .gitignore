@@ -1,2 +1,7 @@
 /.vscode
 /build
+/build/*
+build/CMakeFiles/modbus_client.dir/src/main.cpp.o
+build/modbus_client
+*.o
+*.cpp.o

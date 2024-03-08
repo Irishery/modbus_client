@@ -10,20 +10,20 @@
 
 // ------------ Registers scheme ------------
 
-// - **Rotation 1|0 Registers (1-20)**: 
-// These registers related to the rotation control with values ranging from 1 to 20. 
- 
+// - **Rotation 1|0 Registers (1-20)**:
+// These registers related to the rotation control with values ranging from 1 to 20.
+
 // - **Current Position Registers (30001-30020)**:
-// These registers store the current positions of certain elements or components, with values ranging from 30001 to 30020. 
- 
+// These registers store the current positions of certain elements or components, with values ranging from 30001 to 30020.
+
 // - **Current Speed Registers (40001-40020)**:
-// These registers hold the current speed values of the system, with values ranging from 40001 to 40020. 
- 
+// These registers hold the current speed values of the system, with values ranging from 40001 to 40020.
+
 // - **Rotation Degree Registers (40021-40040)**:
-// These registers used to store the rotation degrees of specific components, with values ranging from 40021 to 40040.  
+// These registers used to store the rotation degrees of specific components, with values ranging from 40021 to 40040.
 
 // - **Acceleration Speed Registers (40041-40060)**:
-// These registers dedicated to storing the acceleration speeds of the system, with values ranging from 40041 to 40060. 
+// These registers dedicated to storing the acceleration speeds of the system, with values ranging from 40041 to 40060.
 
 // ------------ Modbus Client ------------
 class ModbusClient
@@ -39,6 +39,7 @@ public:
     uint16_t *readRegisters(int address, int count);
 
     int writeRegister(int address, int value);
+    int writeRegisters(int address, uint16_t *values, int count);
 
     uint16_t *readInputRegisters(int address, int count);
     uint8_t *readBits(int address);
@@ -92,6 +93,12 @@ int ModbusClient::writeRegister(int address, int value)
     return success;
 };
 
+int ModbusClient::writeRegisters(int address, uint16_t *values, int count)
+{
+    int success = modbus_write_registers(this->ctx, address, count, values); // 1|-1
+    return success;
+};
+
 uint8_t *ModbusClient::readBits(int address)
 {
     uint8_t *tab_bits = (uint8_t *)malloc(sizeof(uint16_t));
@@ -110,10 +117,12 @@ int ModbusClient::writeBit(int address, int status)
 class Stepper
 {
 private:
-    float radiansToDegrees(float radian);
+    
 
 public:
+    float radiansToDegrees(float radian);
     int stepper_id;
+    // int speed_id;
 
     ModbusClient *client;
     Stepper(int id, ModbusClient *client);
@@ -123,13 +132,20 @@ public:
     void setAcceleration(float rad_per_sec_sq);
 
     void rotate(float degree);
+
     float getCurrentPosition();
+    float getCurrentSpeed();
+    int getCurrentAcceleration();
 };
 
 Stepper::Stepper(int id, ModbusClient *client)
 {
     this->stepper_id = id;
     this->client = client;
+
+    // if (stepper_id != 0) {
+    //     this->speed_id = stepper_id + 2
+    // };
 };
 
 float Stepper::radiansToDegrees(float radian)
@@ -149,7 +165,14 @@ void Stepper::setRotationDegree(float radian)
 
 void Stepper::setMaxSpeed(float rad_per_sec)
 {
-    int succes = this->client->writeRegister(this->stepper_id, this->radiansToDegrees(rad_per_sec));
+    uint16_t speed_in_uint_format[2];
+    // int speed = this->radiansToDegrees(rad_per_sec);
+    float speed = this->radiansToDegrees(rad_per_sec);
+
+    modbus_set_float(speed, speed_in_uint_format);
+
+    int succes = this->client->writeRegisters(this->stepper_id, speed_in_uint_format, 2);
+
     if (succes == -1)
     {
         std::cout << "Error writing register" << std::endl;
@@ -175,10 +198,19 @@ void Stepper::rotate(float radian)
     }
 };
 
+// TODO: rethink concept of using modbus directly from Stepper object
 float Stepper::getCurrentPosition()
 {
     uint16_t *position = this->client->readInputRegisters(this->stepper_id, 2);
     return modbus_get_float(position);
+};
+
+float Stepper::getCurrentSpeed()
+{
+    // uint16_t *speed = this->client->readRegisters(this->stepper_id + 20, 4);
+    uint16_t *speed = this->client->readRegisters(this->stepper_id, 2);
+
+    return modbus_get_float(speed);
 };
 
 // // ------------ Stepper Group ------------
