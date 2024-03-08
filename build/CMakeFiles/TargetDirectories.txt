@@ -1,3 +1,0 @@
-/home/kir/modbus_client/build/CMakeFiles/modbus_client.dir
-/home/kir/modbus_client/build/CMakeFiles/edit_cache.dir
-/home/kir/modbus_client/build/CMakeFiles/rebuild_cache.dir

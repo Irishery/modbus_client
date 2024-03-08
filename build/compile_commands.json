@@ -1,7 +1,0 @@
-[
-{
-  "directory": "/home/kir/modbus_client/build",
-  "command": "/usr/bin/c++  -I/home/kir/modbus_client/headers -I/home/kir/modbus_client/libs/libmodbus-3.1.10/src -g -std=c++17 -o CMakeFiles/modbus_client.dir/src/main.cpp.o -c /home/kir/modbus_client/src/main.cpp",
-  "file": "/home/kir/modbus_client/src/main.cpp"
-}
-]
