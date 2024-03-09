@@ -23,6 +23,7 @@ void setup()
 
   stepper1.setRunMode(FOLLOW_POS);
   stepper1.autoPower(true);
+  stepper1.setAcceleration(120);
   //stepper1.autoPower(true);
 
 
@@ -31,25 +32,25 @@ for (int i = 1; i <= 20; i++) {
     regBank.add(i);
 }
 
-// current position
-for (int i = 1; i <= 20; i++) {
+// current position (each stepper takes a 2 registers (0, 1), (2, 3) etc.)
+for (int i = 1; i <= 40; i++) {
     regBank.add(30000 + i);
 }
 
-// current speed
+// current speed (each stepper takes a 2 registers (0, 1), (2, 3) etc.)
 for (int i = 1; i <= 20; i++) {
     regBank.add(40000 + i);
 }
 
-// rotation degree
-for (int i = 21; i <= 40; i++) {
-    regBank.add(40000 + i);
-}
-
-// acceleration speed
+// rotation degree (each stepper takes a 2 registers (0, 1), (2, 3) etc.)
 for (int i = 41; i <= 60; i++) {
     regBank.add(40000 + i);
 }
+
+// acceleration speed (each stepper takes a 2 registers (0, 1), (2, 3) etc.)
+// for (int i = 81; i <= 120; i++) {
+//     regBank.add(40000 + i);
+// }
 
 /*
 Assign the modbus device object to the protocol handler
@@ -79,50 +80,54 @@ GStepper<STEPPER2WIRE> steppers[] = {stepper1, stepper2};
 void loop()
 {
   for (int i = 0; i < steppers_count; i++) {
+    int float_id = i + i + 1;
+
     int is_must_run = regBank.get(i + 1);
 
-    union {
-      float asFloat;
-      int asInt[2];
-    }
-    speed;
+    // Serial.println("Tick1");
+    // uint16_t acceleration[2];
+    // acceleration[0] = regBank.get(40080 + (i * 2));
+    // acceleration[1] = regBank.get(40080 + (i * 2) + 1);
+    // float acceleration_num = modbus_get_float(acceleration);
 
-    float acceleration = regBank.get(40040 + i + 1);
-    
-    uint16_t data[2];
+    uint16_t speed[2];
+    speed[0] = regBank.get(40000 + float_id);
+    speed[1] = regBank.get(40000 + float_id + 1);
+    float speed_num = modbus_get_float(speed);
 
-    data[0] = regBank.get(40000);
-    data[1] = regBank.get(40001);
-    
-    float fln = modbus_get_float(data);
+    // Serial.println("Tick2");
 
-    Serial.println(fln);
+    uint16_t degree[2];
+    degree[0] = regBank.get(40040 + float_id);
+    degree[1] = regBank.get(40040 + float_id + 1);
+    float degree_num = modbus_get_float(degree);
 
-    int degree = regBank.get(40020 + i + 1);
-
-    steppers[i].setAcceleration(acceleration);
-  
-    steppers[i].setMaxSpeedDeg(fln);
-    
+    // Serial.println("Tick3");
+    steppers[i].setAcceleration(120);
+    steppers[i].setMaxSpeedDeg(speed_num);
+    // Serial.println("Tick4");
 
     if (!steppers[i].tick()) {
+      // Serial.println("ping1");
       if (is_must_run) {
-        steppers[i].setTargetDeg(degree, RELATIVE);
+        steppers[i].setTargetDeg(degree_num, RELATIVE);
       }
     } else {
+      // Serial.println("ping2");
       regBank.set(i + 1, 0);
     }
+    // Serial.println("Tick5");
 
-    union {
-      float asFloat;
-      int asInt[2];
-    }
-    flreg;
+    // union {
+    //   float asFloat;
+    //   int asInt[2];
+    // }
+    // flreg;
 
 
-    flreg.asFloat = steppers[0].getCurrentDeg();
-    regBank.set(30000 + 1, flreg.asInt[0]);
-    regBank.set(30000 + 1 + 1, flreg.asInt[1]);
+    // flreg.asFloat = steppers[0].getCurrentDeg();
+    // regBank.set(30000 + float_id, flreg.asInt[0]);
+    // regBank.set((30000 + float_id + 1), flreg.asInt[1]);
 
   }
 

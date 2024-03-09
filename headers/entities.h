@@ -9,21 +9,41 @@
 #define PI 3.14159265359
 
 // ------------ Registers scheme ------------
-
-// - **Rotation 1|0 Registers (1-20)**:
-// These registers related to the rotation control with values ranging from 1 to 20.
-
-// - **Current Position Registers (30001-30020)**:
-// These registers store the current positions of certain elements or components, with values ranging from 30001 to 30020.
-
-// - **Current Speed Registers (40001-40020)**:
-// These registers hold the current speed values of the system, with values ranging from 40001 to 40020.
-
-// - **Rotation Degree Registers (40021-40040)**:
-// These registers used to store the rotation degrees of specific components, with values ranging from 40021 to 40040.
-
-// - **Acceleration Speed Registers (40041-40060)**:
-// These registers dedicated to storing the acceleration speeds of the system, with values ranging from 40041 to 40060.
+// 1. **Rotation 1|0**: 
+//    - Registers: 1 to 20 
+//    - Description: Populates the register bank with integers for rotation data. 
+ 
+// 2. **Current Position (Integer Part)**: 
+//    - Registers: 30001 to 30020 
+//    - Description: Stores the integer part of current position data. 
+ 
+// 3. **Current Position (Float Part)**: 
+//    - Registers: 30021 to 30040 
+//    - Description: Captures the float part of current position data. 
+ 
+// 4. **Current Speed (Integer Part)**: 
+//    - Registers: 40001 to 40020 
+//    - Description: Records the integer part of current speed data. 
+ 
+// 5. **Current Speed (Float Part)**: 
+//    - Registers: 40021 to 40040 
+//    - Description: Manages the float part of current speed data. 
+ 
+// 6. **Rotation Degree (Integer Part)**: 
+//    - Registers: 40041 to 40060 
+//    - Description: Holds the integer part of rotation degree data. 
+ 
+// 7. **Rotation Degree (Float Part)**: 
+//    - Registers: 40061 to 40080 
+//    - Description: Manages the float part of rotation degree data. 
+ 
+// 8. **Acceleration Speed (Integer Part)**: 
+//    - Registers: 40081 to 40100 
+//    - Description: Stores the integer part of acceleration speed data. 
+ 
+// 9. **Acceleration Speed (Float Part)**: 
+//    - Registers: 40101 to 40120 
+//    - Description: Captures the float part of acceleration speed data. 
 
 // ------------ Modbus Client ------------
 class ModbusClient
@@ -96,6 +116,12 @@ int ModbusClient::writeRegister(int address, int value)
 int ModbusClient::writeRegisters(int address, uint16_t *values, int count)
 {
     int success = modbus_write_registers(this->ctx, address, count, values); // 1|-1
+    if (success == -1)
+    {
+        fprintf(stderr, "Error writing register: %s\n", modbus_strerror(errno));
+        // std::cout << "Error writing register" << std::endl;
+    }
+
     return success;
 };
 
@@ -117,12 +143,10 @@ int ModbusClient::writeBit(int address, int status)
 class Stepper
 {
 private:
-    
-
 public:
     float radiansToDegrees(float radian);
     int stepper_id;
-    // int speed_id;
+    int float_id; // refers to group of registers that stores a float value
 
     ModbusClient *client;
     Stepper(int id, ModbusClient *client);
@@ -142,10 +166,7 @@ Stepper::Stepper(int id, ModbusClient *client)
 {
     this->stepper_id = id;
     this->client = client;
-
-    // if (stepper_id != 0) {
-    //     this->speed_id = stepper_id + 2
-    // };
+    this->float_id = id * 2;
 };
 
 float Stepper::radiansToDegrees(float radian)
@@ -155,33 +176,38 @@ float Stepper::radiansToDegrees(float radian)
 
 void Stepper::setRotationDegree(float radian)
 {
+    uint16_t radian_in_uint_format[2];
+    float degree = this->radiansToDegrees(radian);
 
-    int succes = this->client->writeRegister(this->stepper_id + 20, this->radiansToDegrees(radian)); // add 20 because of registers scheme
+    modbus_set_float(degree, radian_in_uint_format);
+
+    int succes = this->client->writeRegisters(this->stepper_id, radian_in_uint_format, 2); // add 20 because of registers scheme
     if (succes == -1)
     {
-        std::cout << "Error writing register" << std::endl;
+        fprintf(stderr, "Error writing register: %s\n", modbus_strerror(errno));
+        // std::cout << "Error writing register" << std::endl;
     }
 };
 
 void Stepper::setMaxSpeed(float rad_per_sec)
 {
     uint16_t speed_in_uint_format[2];
-    // int speed = this->radiansToDegrees(rad_per_sec);
     float speed = this->radiansToDegrees(rad_per_sec);
 
     modbus_set_float(speed, speed_in_uint_format);
-
     int succes = this->client->writeRegisters(this->stepper_id, speed_in_uint_format, 2);
 
     if (succes == -1)
     {
-        std::cout << "Error writing register" << std::endl;
+        fprintf(stderr, "Error writing register: %s\n", modbus_strerror(errno));
+        // std::cout << "Error writing register" << std::endl;
     }
 };
 
 void Stepper::setAcceleration(float rad_per_sec_sq)
 {
-    int succes = this->client->writeRegister(this->stepper_id + 40, this->radiansToDegrees(rad_per_sec_sq));
+    std::cout << "Setting acceleration to " << rad_per_sec_sq << std::endl;
+    int succes = this->client->writeRegister(this->stepper_id, this->radiansToDegrees(rad_per_sec_sq));
     if (succes == -1)
     {
         std::cout << "Error writing register" << std::endl;
@@ -190,11 +216,13 @@ void Stepper::setAcceleration(float rad_per_sec_sq)
 
 void Stepper::rotate(float radian)
 {
+    std::cout << "Rotating " << radian << " radians" << std::endl;
     this->setRotationDegree(radian);
     int succes = this->client->writeBit(this->stepper_id, 1);
     if (succes == -1)
     {
-        std::cout << "Error writing bit" << std::endl;
+        fprintf(stderr, "Error writing bit: %s\n", modbus_strerror(errno));
+        // std::cout << "Error writing bit" << std::endl;
     }
 };
 
@@ -202,13 +230,14 @@ void Stepper::rotate(float radian)
 float Stepper::getCurrentPosition()
 {
     uint16_t *position = this->client->readInputRegisters(this->stepper_id, 2);
+
     return modbus_get_float(position);
 };
 
 float Stepper::getCurrentSpeed()
 {
-    // uint16_t *speed = this->client->readRegisters(this->stepper_id + 20, 4);
     uint16_t *speed = this->client->readRegisters(this->stepper_id, 2);
+    std::cout << speed[0] << " " << speed[1] << std::endl;
 
     return modbus_get_float(speed);
 };
