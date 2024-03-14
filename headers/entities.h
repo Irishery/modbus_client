@@ -69,7 +69,7 @@ public:
 
 ModbusClient::ModbusClient(const char *port)
 {
-    this->ctx = modbus_new_rtu(port, 9600, 'N', 8, 1);
+    this->ctx = modbus_new_rtu(port, 115200, 'N', 8, 1);
     if (ctx == NULL)
     {
         fprintf(stderr, "Unable to create the libmodbus context\n");
@@ -181,7 +181,7 @@ void Stepper::setRotationDegree(float radian)
 
     modbus_set_float(degree, radian_in_uint_format);
 
-    int succes = this->client->writeRegisters(this->stepper_id, radian_in_uint_format, 2); // add 20 because of registers scheme
+    int succes = this->client->writeRegisters(this->stepper_id*2 + 40, radian_in_uint_format, 2); // add 20 because of registers scheme
     if (succes == -1)
     {
         fprintf(stderr, "Error writing register: %s\n", modbus_strerror(errno));
@@ -189,13 +189,14 @@ void Stepper::setRotationDegree(float radian)
     }
 };
 
+//TODO: make a logger
 void Stepper::setMaxSpeed(float rad_per_sec)
 {
     uint16_t speed_in_uint_format[2];
     float speed = this->radiansToDegrees(rad_per_sec);
 
     modbus_set_float(speed, speed_in_uint_format);
-    int succes = this->client->writeRegisters(this->stepper_id, speed_in_uint_format, 2);
+    int succes = this->client->writeRegisters(this->stepper_id*2, speed_in_uint_format, 2);
 
     if (succes == -1)
     {

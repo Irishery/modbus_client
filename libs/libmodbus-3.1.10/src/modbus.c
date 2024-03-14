@@ -1293,11 +1293,6 @@ static int read_registers(modbus_t *ctx, int function, int addr, int nb, uint16_
 
     req_length = ctx->backend->build_request_basis(ctx, function, addr, nb, req);
 
-    printf("read regs\n");
-    for (int i = 0; i < req_length; i++) {
-        printf(" %02X\n", req[i]);
-    };
-
     rc = send_msg(ctx, req, req_length);
     if (rc > 0) {
         unsigned int offset;
@@ -1387,11 +1382,6 @@ static int write_single(modbus_t *ctx, int function, int addr, const uint16_t va
     }
 
     req_length = ctx->backend->build_request_basis(ctx, function, addr, (int) value, req);
-
-    printf("Req\n");
-    for (int i = 0; i < req_length; i++) {
-        printf("%02X\n", req[i]);
-    };
 
     rc = send_msg(ctx, req, req_length);
     if (rc > 0) {
@@ -1527,12 +1517,6 @@ int modbus_write_registers(modbus_t *ctx, int addr, int nb, const uint16_t *src)
         req[req_length++] = src[i] >> 8;
         req[req_length++] = src[i] & 0x00FF;
     }
-
-    printf("Req\n");
-    for (i = 0; i < req_length; i++) {
-        printf("%02X\n", req[i]);
-    }
-    printf("\n");
 
     rc = send_msg(ctx, req, req_length);
     if (rc > 0) {
