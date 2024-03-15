@@ -21,11 +21,20 @@ int main(void)
     stepper1->setAcceleration(0 * PI);
     stepper2->setAcceleration(30 * PI);
 
-    stepper1->rotate(2 * PI);
+    stepper1->rotate(1 * PI);
     stepper2->rotate(2 * PI);
 
     // float current_pos = stepper1->getCurrentPosition();
 
-    std::cout << "Current speed: " << stepper1->getCurrentSpeed() << std::endl;
-    // std::cout << "Current position: " << fmod(current_pos, 360.0) << std::endl;
+    std::cout << "Current acceleration stepper1: " << stepper1->getCurrentAcceleration() << std::endl;
+    std::cout << "Current acceleration stepper2: " << stepper2->getCurrentAcceleration() << std::endl;
+
+    std::cout << "Current speed stepper1: " << stepper1->getCurrentSpeed() << std::endl;
+    std::cout << "Current speed stepper2: " << stepper2->getCurrentSpeed() << std::endl;
+
+    std::cout << "Current position stepper1: " << stepper1->getCurrentPosition() << std::endl;
+    std::cout << "Current position stepper2: " << stepper2->getCurrentPosition() << std::endl;
+
+    std::cout << "Current rotation degree stepper1: " << stepper1->getCurrentRotationDegree() << std::endl;
+    std::cout << "Current rotation degree stepper2: " << stepper2->getCurrentRotationDegree() << std::endl;
 }

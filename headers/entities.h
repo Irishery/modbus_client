@@ -130,7 +130,8 @@ public:
 
     float getCurrentPosition();
     float getCurrentSpeed();
-    int getCurrentAcceleration();
+    float getCurrentAcceleration();
+    float getCurrentRotationDegree();
 };
 
 Stepper::Stepper(int id, ModbusClient *client)
@@ -184,7 +185,6 @@ void Stepper::setAcceleration(float rad_per_sec)
 
     modbus_set_float(acceleration, acceleration_in_uint_format);
 
-    std::cout << "Setting acceleration to " << rad_per_sec << std::endl;
     int succes = this->client->writeRegisters(this->stepper_id * 2 + STEPPERS_COUNT * 4, acceleration_in_uint_format, 2);
     if (succes == -1)
     {
@@ -194,8 +194,8 @@ void Stepper::setAcceleration(float rad_per_sec)
 
 void Stepper::rotate(float radian)
 {
-    std::cout << "Rotating " << radian << " radians" << std::endl;
     this->setRotationDegree(radian);
+
     int succes = this->client->writeBit(this->stepper_id, 1);
     if (succes == -1)
     {
@@ -207,17 +207,30 @@ void Stepper::rotate(float radian)
 // TODO: rethink concept of using modbus directly from Stepper object
 float Stepper::getCurrentPosition()
 {
-    uint16_t *position = this->client->readInputRegisters(this->stepper_id, 2);
+    uint16_t *position = this->client->readInputRegisters(this->stepper_id*2, 2);
 
     return modbus_get_float(position);
 };
 
 float Stepper::getCurrentSpeed()
 {
-    uint16_t *speed = this->client->readRegisters(this->stepper_id, 2);
-    std::cout << speed[0] << " " << speed[1] << std::endl;
+    uint16_t *speed = this->client->readRegisters(this->stepper_id*2, 2);
 
     return modbus_get_float(speed);
+};
+
+float Stepper::getCurrentAcceleration()
+{
+    uint16_t *acceleration = this->client->readRegisters(this->stepper_id*2 + STEPPERS_COUNT * 4, 2);
+
+    return modbus_get_float(acceleration);
+};
+
+float Stepper::getCurrentRotationDegree()
+{
+    uint16_t *rotation_degree = this->client->readRegisters(this->stepper_id * 2 + STEPPERS_COUNT * 2, 2);
+
+    return modbus_get_float(rotation_degree);
 };
 
 // // ------------ Stepper Group ------------
