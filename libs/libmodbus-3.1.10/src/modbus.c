@@ -1292,6 +1292,7 @@ static int read_registers(modbus_t *ctx, int function, int addr, int nb, uint16_
     }
 
     req_length = ctx->backend->build_request_basis(ctx, function, addr, nb, req);
+    printf("len %d\n", req_length);
 
     // printf("read regs\n");
     // for (int i = 0; i < req_length; i++) {

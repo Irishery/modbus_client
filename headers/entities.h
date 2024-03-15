@@ -204,7 +204,8 @@ void Stepper::rotate(float radian)
     }
 };
 
-// TODO: rethink concept of using modbus directly from Stepper object
+// TODO: think if its correctly to use modbus directly from Stepper class
+// TODO: sometimes it returns 0 when it shouldnt - figure out the reason
 float Stepper::getCurrentPosition()
 {
     uint16_t *position = this->client->readInputRegisters(this->stepper_id*2, 2);

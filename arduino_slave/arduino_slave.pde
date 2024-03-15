@@ -23,13 +23,15 @@ void setup()
 
   stepper1.setRunMode(FOLLOW_POS);
   // stepper1.autoPower(true);
-  // stepper1.setSpeed(260);
-  // stepper1.setAcceleration(120);
+  stepper1.setSpeed(260);
+  stepper1.setAcceleration(120);
   
 
   stepper2.setRunMode(FOLLOW_POS);
-  // stepper2.setSpeed(260);
-  // stepper2.setAcceleration(120);
+  stepper1.setTargetDeg(180, ABSOLUTE);
+  stepper2.setTargetDeg(180, ABSOLUTE);
+  stepper2.setSpeed(260);
+  stepper2.setAcceleration(120);
   //stepper1.autoPower(true);
 
 
@@ -110,10 +112,13 @@ GStepper<STEPPER2WIRE> steppers[] = {stepper1, stepper2};
 
 void loop()
 {
+
   for (int i = 0; i < STEPPERS_COUNT; i++) {
+    int is_must_run = regBank.get(i + 1);
+    if(is_must_run) {
     int float_id = i + i + 1;
 
-    steppers[i].tick();
+    steppers[i].setRunMode(FOLLOW_POS);
 
     uint16_t speed[2];
     speed[0] = regBank.get(40000 + float_id);
@@ -142,33 +147,47 @@ void loop()
     // Serial.println(acceleration_num);
     // Serial.println("-----------");
 
-    steppers[i].tick();
+    //steppers[i].tick();
 
     steppers[i].setAcceleration(acceleration_num);
     steppers[i].setMaxSpeedDeg(speed_num);
 
     int is_must_run = regBank.get(i + 1);
-    if (!steppers[i].tick()) {
-      if (is_must_run) {
-        steppers[i].setTargetDeg(degree_num, RELATIVE);
-      }
-    } else {
-      regBank.set(i + 1, 0);
+    // if (!steppers[i].tick()) {
+      // if (is_must_run) {
+    // steppers[i].tick();
+    steppers[i].setTargetDeg(degree_num, ABSOLUTE);
+    // steppers[i].tick();
+    //   }
+    // } else {
+    regBank.set(i + 1, 0);
+    // }
     }
-
-    steppers[i].tick();
-
-    union {
-      float asFloat;
-      int asInt[2];
-    }
-    flreg;
-
-    flreg.asFloat = steppers[0].getCurrentDeg();
-    regBank.set(30000 + float_id, flreg.asInt[0]);
-    regBank.set((30000 + float_id + 1), flreg.asInt[1]);
+    //steppers[i].tick();
 
   }
 
+  for(int i=0;i<STEPPERS_COUNT;i++)
+  {
+      //int is_must_run = regBank.get(i + 1);
+      //stepper1.setTargetDeg(180, ABSOLUTE);
+      //if(is_must_run)
+      steppers[i].tick();
+  }
+
+  /*for(int i=0;i<STEPPERS_COUNT;i++)
+  {
+      int float_id = i + i + 1;
+      union {
+        float asFloat;
+        int asInt[2];
+      }
+      flreg;
+
+      flreg.asFloat = steppers[i].getCurrentDeg();
+      regBank.set(30000 + float_id, flreg.asInt[0]);
+      regBank.set((30000 + float_id + 1), flreg.asInt[1]);
+  }
+*/
   slave.run();
 }
