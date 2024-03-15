@@ -8,19 +8,21 @@
 
 int main(void)
 {
+    //TODO: delete print of raw modbus request
+
     ModbusClient *client = new ModbusClient("/dev/ttyUSB0");
     Stepper *stepper1 = new Stepper(0, client);
     Stepper *stepper2 = new Stepper(1, client);
 
-    stepper2->setMaxSpeed(4 * PI);
-    std::cout << stepper2->radiansToDegrees(2 * PI) << std::endl;
-    // stepper2->setMaxSpeed(PI);
+    stepper1->setMaxSpeed(PI);
+    stepper2->setMaxSpeed(PI);
 
-    // stepper1->setAcceleration(30 * PI);
-    // stepper2->setAcceleration(30 * PI);
+    //TODO: check acceleration in toolkit
+    stepper1->setAcceleration(0 * PI);
+    stepper2->setAcceleration(30 * PI);
 
-    stepper2->rotate(4 * PI);
-    // stepper2->rotate(2 * PI);
+    stepper1->rotate(2 * PI);
+    stepper2->rotate(2 * PI);
 
     // float current_pos = stepper1->getCurrentPosition();
 

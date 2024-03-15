@@ -7,43 +7,14 @@
 
 // #define PI 3.14159265358979323
 #define PI 3.14159265359
+#define STEPPERS_COUNT 2
 
 // ------------ Registers scheme ------------
-// 1. **Rotation 1|0**: 
-//    - Registers: 1 to 20 
-//    - Description: Populates the register bank with integers for rotation data. 
- 
-// 2. **Current Position (Integer Part)**: 
-//    - Registers: 30001 to 30020 
-//    - Description: Stores the integer part of current position data. 
- 
-// 3. **Current Position (Float Part)**: 
-//    - Registers: 30021 to 30040 
-//    - Description: Captures the float part of current position data. 
- 
-// 4. **Current Speed (Integer Part)**: 
-//    - Registers: 40001 to 40020 
-//    - Description: Records the integer part of current speed data. 
- 
-// 5. **Current Speed (Float Part)**: 
-//    - Registers: 40021 to 40040 
-//    - Description: Manages the float part of current speed data. 
- 
-// 6. **Rotation Degree (Integer Part)**: 
-//    - Registers: 40041 to 40060 
-//    - Description: Holds the integer part of rotation degree data. 
- 
-// 7. **Rotation Degree (Float Part)**: 
-//    - Registers: 40061 to 40080 
-//    - Description: Manages the float part of rotation degree data. 
- 
-// 8. **Acceleration Speed (Integer Part)**: 
-//    - Registers: 40081 to 40100 
-//    - Description: Stores the integer part of acceleration speed data. 
- 
-// 9. **Acceleration Speed (Float Part)**: 
-//    - Registers: 40101 to 40120 
-//    - Description: Captures the float part of acceleration speed data. 
+// 1. Rotation Status Registers: 1 to STEPPERS_COUNT 
+// 2. Current Position Registers: 30001 to (30000 + STEPPERS_COUNT*2) 
+// 3. Current Speed Registers: 40001 to (40000 + STEPPERS_COUNT*2) 
+// 4. Rotation Degree Registers: (40001 + STEPPERS_COUNT*2) to (40000 + STEPPERS_COUNT*4) 
+// 5. Acceleration Speed Registers: (40001 + STEPPERS_COUNT*4) to (40000 + STEPPERS_COUNT*6) 
 
 // ------------ Modbus Client ------------
 class ModbusClient
@@ -181,7 +152,7 @@ void Stepper::setRotationDegree(float radian)
 
     modbus_set_float(degree, radian_in_uint_format);
 
-    int succes = this->client->writeRegisters(this->stepper_id*2 + 40, radian_in_uint_format, 2); // add 20 because of registers scheme
+    int succes = this->client->writeRegisters(this->stepper_id * 2 + STEPPERS_COUNT * 2, radian_in_uint_format, 2); // add 20 because of registers scheme
     if (succes == -1)
     {
         fprintf(stderr, "Error writing register: %s\n", modbus_strerror(errno));
@@ -189,14 +160,14 @@ void Stepper::setRotationDegree(float radian)
     }
 };
 
-//TODO: make a logger
+// TODO: make a logger
 void Stepper::setMaxSpeed(float rad_per_sec)
 {
     uint16_t speed_in_uint_format[2];
     float speed = this->radiansToDegrees(rad_per_sec);
 
     modbus_set_float(speed, speed_in_uint_format);
-    int succes = this->client->writeRegisters(this->stepper_id*2, speed_in_uint_format, 2);
+    int succes = this->client->writeRegisters(this->stepper_id * 2, speed_in_uint_format, 2);
 
     if (succes == -1)
     {
@@ -205,10 +176,16 @@ void Stepper::setMaxSpeed(float rad_per_sec)
     }
 };
 
-void Stepper::setAcceleration(float rad_per_sec_sq)
+void Stepper::setAcceleration(float rad_per_sec)
 {
-    std::cout << "Setting acceleration to " << rad_per_sec_sq << std::endl;
-    int succes = this->client->writeRegister(this->stepper_id, this->radiansToDegrees(rad_per_sec_sq));
+
+    uint16_t acceleration_in_uint_format[2];
+    float acceleration = this->radiansToDegrees(rad_per_sec);
+
+    modbus_set_float(acceleration, acceleration_in_uint_format);
+
+    std::cout << "Setting acceleration to " << rad_per_sec << std::endl;
+    int succes = this->client->writeRegisters(this->stepper_id * 2 + STEPPERS_COUNT * 4, acceleration_in_uint_format, 2);
     if (succes == -1)
     {
         std::cout << "Error writing register" << std::endl;
