@@ -1292,7 +1292,7 @@ static int read_registers(modbus_t *ctx, int function, int addr, int nb, uint16_
     }
 
     req_length = ctx->backend->build_request_basis(ctx, function, addr, nb, req);
-    printf("len %d\n", req_length);
+    // printf("len %d\n", req_length);
 
     // printf("read regs\n");
     // for (int i = 0; i < req_length; i++) {
@@ -1394,11 +1394,11 @@ static int write_single(modbus_t *ctx, int function, int addr, const uint16_t va
         /* Used by write_bit and write_register */
         uint8_t rsp[MAX_MESSAGE_LENGTH];
 
-        // printf("Req\n");
-        // for (int i = 0; i < req_length; i++) {
-        //     printf("%02X\n", req[i]);
-        // }
-        // printf("\n");
+        printf("Req\n");
+        for (int i = 0; i < req_length; i++) {
+            printf("%02X ", req[i]);
+        }
+        printf("\n");
 
         rc = _modbus_receive_msg(ctx, rsp, MSG_CONFIRMATION);
         if (rc == -1)
@@ -1541,11 +1541,11 @@ int modbus_write_registers(modbus_t *ctx, int addr, int nb, const uint16_t *src)
         rc = check_confirmation(ctx, req, rsp, rc);
     }
 
-    // printf("Req\n");
-    // for (i = 0; i < req_length; i++) {
-    //     printf("%02X\n", req[i]);
-    // }
-    // printf("\n");
+    printf("Req\n");
+    for (i = 0; i < req_length; i++) {
+        printf("%02X ", req[i]);
+    }
+    printf("\n");
 
     return rc;
 }

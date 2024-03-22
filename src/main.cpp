@@ -16,8 +16,7 @@ int main(void)
     Stepper *stepper1 = new Stepper(0, client);
     Stepper *stepper2 = new Stepper(1, client);
 
-    for (int i; i <= 100; i++) {
-
+    for (int i=0; i <= 100; i++) {
     
         stepper1->setMaxSpeed(7.72 * PI);
         stepper2->setMaxSpeed(7.72 * PI);
@@ -36,7 +35,7 @@ int main(void)
         }
         
 
-        float current_pos = stepper1->getCurrentPosition();
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
         std::cout << "Current acceleration stepper1: " << stepper1->getCurrentAcceleration() << std::endl;
         std::cout << "Current acceleration stepper2: " << stepper2->getCurrentAcceleration() << std::endl;
