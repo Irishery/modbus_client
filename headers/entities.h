@@ -5,16 +5,14 @@
 #include <array>
 #include <math.h>
 
-// #define PI 3.14159265358979323
-#define PI 3.14159265359
 #define STEPPERS_COUNT 2
 
 // ------------ Registers scheme ------------
-// 1. Rotation Status Registers: 1 to STEPPERS_COUNT 
-// 2. Current Position Registers: 30001 to (30000 + STEPPERS_COUNT*2) 
-// 3. Current Speed Registers: 40001 to (40000 + STEPPERS_COUNT*2) 
-// 4. Rotation Degree Registers: (40001 + STEPPERS_COUNT*2) to (40000 + STEPPERS_COUNT*4) 
-// 5. Acceleration Speed Registers: (40001 + STEPPERS_COUNT*4) to (40000 + STEPPERS_COUNT*6) 
+// 1. Rotation Status Registers: 1 to STEPPERS_COUNT
+// 2. Current Position Registers: 30001 to (30000 + STEPPERS_COUNT*2)
+// 3. Current Speed Registers: 40001 to (40000 + STEPPERS_COUNT*2)
+// 4. Rotation Degree Registers: (40001 + STEPPERS_COUNT*2) to (40000 + STEPPERS_COUNT*4)
+// 5. Acceleration Speed Registers: (40001 + STEPPERS_COUNT*4) to (40000 + STEPPERS_COUNT*6)
 
 // ------------ Modbus Client ------------
 class ModbusClient
@@ -127,11 +125,13 @@ public:
     void setAcceleration(float rad_per_sec_sq);
 
     void rotate(float degree);
+    void reset();
 
     float getCurrentPosition();
     float getCurrentSpeed();
     float getCurrentAcceleration();
     float getCurrentRotationDegree();
+    bool getRotationStatus();
 };
 
 Stepper::Stepper(int id, ModbusClient *client)
@@ -143,7 +143,7 @@ Stepper::Stepper(int id, ModbusClient *client)
 
 float Stepper::radiansToDegrees(float radian)
 {
-    return (radian * (180 / PI));
+    return (radian * (180 / M_PI));
 };
 
 void Stepper::setRotationDegree(float radian)
@@ -204,25 +204,35 @@ void Stepper::rotate(float radian)
     }
 };
 
+void Stepper::reset()
+{
+    int succes = this->client->writeBit(this->stepper_id + STEPPERS_COUNT, 1);
+    if (succes == -1)
+    {
+        fprintf(stderr, "Error writing bit: %s\n", modbus_strerror(errno));
+        // std::cout << "Error writing bit" << std::endl;
+    }
+};
+
 // TODO: think if its correctly to use modbus directly from Stepper class
 // TODO: sometimes it returns 0 when it shouldnt - figure out the reason
 float Stepper::getCurrentPosition()
 {
-    uint16_t *position = this->client->readInputRegisters(this->stepper_id*2, 2);
+    uint16_t *position = this->client->readInputRegisters(this->stepper_id * 2, 2);
 
     return modbus_get_float(position);
 };
 
 float Stepper::getCurrentSpeed()
 {
-    uint16_t *speed = this->client->readRegisters(this->stepper_id*2, 2);
+    uint16_t *speed = this->client->readRegisters(this->stepper_id * 2, 2);
 
     return modbus_get_float(speed);
 };
 
 float Stepper::getCurrentAcceleration()
 {
-    uint16_t *acceleration = this->client->readRegisters(this->stepper_id*2 + STEPPERS_COUNT * 4, 2);
+    uint16_t *acceleration = this->client->readRegisters(this->stepper_id * 2 + STEPPERS_COUNT * 4, 2);
 
     return modbus_get_float(acceleration);
 };
@@ -232,6 +242,13 @@ float Stepper::getCurrentRotationDegree()
     uint16_t *rotation_degree = this->client->readRegisters(this->stepper_id * 2 + STEPPERS_COUNT * 2, 2);
 
     return modbus_get_float(rotation_degree);
+};
+
+bool Stepper::getRotationStatus()
+{
+    uint8_t *rotation_status = this->client->readBits(this->stepper_id + 20);
+
+    return *rotation_status;
 };
 
 // // ------------ Stepper Group ------------

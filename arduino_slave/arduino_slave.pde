@@ -16,18 +16,25 @@ modbusSlave slave;
 
 void setup()
 {   
-  
+  delay(3000);
 //Assign the modbus device ID.  
   regBank.setId(1);
   Serial.begin(9600);
 
   stepper1.setRunMode(FOLLOW_POS);
+  stepper1.setTargetDeg(0);
 
   stepper2.setRunMode(FOLLOW_POS);
+  stepper2.setTargetDeg(0);
 
 
-// rotation 1|0
-for (int i = 1; i <= STEPPERS_COUNT; i++) {
+// rotation command 1|0
+for (int i = 1; i <= STEPPERS_COUNT*2; i++) {
+    regBank.add(i);
+}
+
+// rotation status 1|0
+for (int i = 20; i <= 20 + STEPPERS_COUNT; i++) {
     regBank.add(i);
 }
 
@@ -81,8 +88,23 @@ void loop()
 {
   for (int i = 0; i < STEPPERS_COUNT; i++) {
     int is_must_run = regBank.get(i + 1);
-    if(is_must_run) {
+    int is_must_brake = regBank.get(STEPPERS_COUNT + i + 1);
+
+    if(is_must_brake)
+    {
+      steppers[i].reset();
+      regBank.set(STEPPERS_COUNT + i + 1, 0);
+      continue;
+    }
+
+    if(is_must_run) 
+    {
       int float_id = i + i + 1;
+
+      // Serial.println("CURRENT TARGET");
+      // Serial.println(steppers[i].getTargetDeg());
+      // Serial.println(steppers[i].getTarget());
+      // Serial.println("-----------");
 
       uint16_t speed[2];
       speed[0] = regBank.get(40000 + float_id);
@@ -124,7 +146,14 @@ void loop()
 
   for(int i=0;i<STEPPERS_COUNT;i++)
   {
-      steppers[i].tick();
+    steppers[i].tick();
+    if (steppers[i].getState()) 
+    {
+      regBank.set(20 + i + 1, 1);
+    } 
+    else {
+      regBank.set(20 + i + 1, 0);
+    }
   }
 
   for(int i=0;i<STEPPERS_COUNT;i++)
