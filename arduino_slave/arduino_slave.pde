@@ -48,11 +48,6 @@ for (int i = 1; i <= STEPPERS_COUNT*4; i++) {
     regBank.add(i);
 }
 
-// rotation status 1|0
-for (int i = 20; i <= 20 + STEPPERS_COUNT; i++) {
-    regBank.add(i);
-}
-
 // current position (each stepper takes a 2 registers (0, 1), (2, 3) etc.)
 for (int i = 1; i <= (STEPPERS_COUNT*2); i++) {
     regBank.add(30000 + i);
@@ -118,7 +113,7 @@ void loop()
     {
       if (!steppers[i].tick()) {
         steppers[i].setRunMode(KEEP_SPEED);
-        steppers[i].setSpeedDeg(90);
+        steppers[i].setSpeedDeg(180);
         steppers[i].tick();
       }
 

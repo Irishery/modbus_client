@@ -22,6 +22,11 @@
 // 4. Rotation Degree Registers: (40001 + STEPPERS_COUNT*2) to (40000 + STEPPERS_COUNT*4)
 // 5. Acceleration Speed Registers: (40001 + STEPPERS_COUNT*4) to (40000 + STEPPERS_COUNT*6)
 
+float radiansToDegrees(float radian)
+{
+    return (radian * (180 / M_PI));
+};
+
 // ------------ Modbus Client ------------
 class ModbusClient
 {
@@ -42,6 +47,7 @@ public:
     uint8_t *readBits(int address);
 
     int writeBit(int address, int status);
+    int writeBits(int address, uint8_t *values, int count);
 };
 
 ModbusClient::ModbusClient(const char *port)
@@ -115,13 +121,22 @@ int ModbusClient::writeBit(int address, int status)
     return success;
 };
 
+int ModbusClient::writeBits(int address, uint8_t *values, int count)
+{
+    int success = modbus_write_bits(this->ctx, address, count, values); // 1|-1
+    if (success == -1)
+    {
+        fprintf(stderr, "Error writing register: %s\n", modbus_strerror(errno));
+    }
+
+    return success;
+};
+
 // ------------ Stepper ------------
 
 class Stepper
 {
-private:
 public:
-    float radiansToDegrees(float radian);
     int stepper_id;
     int float_id; // refers to group of registers that stores a float value
 
@@ -150,15 +165,10 @@ Stepper::Stepper(int id, ModbusClient *client)
     this->float_id = id * 2;
 };
 
-float Stepper::radiansToDegrees(float radian)
-{
-    return (radian * (180 / M_PI));
-};
-
 void Stepper::setRotationDegree(float radian)
 {
     uint16_t radian_in_uint_format[2];
-    float degree = this->radiansToDegrees(radian);
+    float degree = radiansToDegrees(radian);
 
     modbus_set_float(degree, radian_in_uint_format);
 
@@ -174,7 +184,7 @@ void Stepper::setRotationDegree(float radian)
 void Stepper::setMaxSpeed(float rad_per_sec)
 {
     uint16_t speed_in_uint_format[2];
-    float speed = this->radiansToDegrees(rad_per_sec);
+    float speed = radiansToDegrees(rad_per_sec);
 
     modbus_set_float(speed, speed_in_uint_format);
     int succes = this->client->writeRegisters(this->stepper_id * 2, speed_in_uint_format, 2);
@@ -190,7 +200,7 @@ void Stepper::setAcceleration(float rad_per_sec)
 {
 
     uint16_t acceleration_in_uint_format[2];
-    float acceleration = this->radiansToDegrees(rad_per_sec);
+    float acceleration = radiansToDegrees(rad_per_sec);
 
     modbus_set_float(acceleration, acceleration_in_uint_format);
 
@@ -225,8 +235,8 @@ void Stepper::brake()
 
 void Stepper::reset()
 {
-    //TODO: это костыль, чтобы останавливать двигатель, если в момент вызова калибровки он уже крутился к цели
-    // Убрать костыль, если получилось мигрировать на GStepper2
+    // TODO: это костыль, чтобы останавливать двигатель, если в момент вызова калибровки он уже крутился к цели
+    //  Убрать костыль, если получилось мигрировать на GStepper2
     this->brake();
 
     int succes = this->client->writeBit(this->stepper_id + STEPPERS_COUNT * 2, 1);
@@ -274,28 +284,99 @@ int Stepper::getStatus()
 
     int status;
 
-    if (*calibration_status) {
+    if (*calibration_status)
+    {
         return CALIBRATION;
     }
 
-    if (*rotation_status) {
+    if (*rotation_status)
+    {
         return ROTATION;
     }
 
     return READY;
 };
 
-// // ------------ Stepper Group ------------
+// ------------ Stepper Group ------------
 
-// class StepperGroup {
-//     private:
-//         std::array<Stepper*, 20> stepper_group;
+class SteppersGroup
+{
+public:
+    Stepper *steppers_group[STEPPERS_COUNT];
+    ModbusClient *client;
 
-//     public:
-//         StepperGroup(ModbusClient *client);
+    SteppersGroup(ModbusClient *client, Stepper steppers_group[STEPPERS_COUNT]);
 
-//         int stepper_count;
+    // TODO: think about troubleshooting when param sets to a group
+    void setMaxSpeedAll(float rad_per_sec);
+    void setAccelerationAll(float rad_per_sec);
 
-//         std::array<int, 20> stepper_ids;
+    void breakAll();
+    void resetAll();
 
-// };
+    float *getCurrentPositionAll();
+    float *getCurrentSpeedAll();
+    float *getCurrentAccelerationAll();
+    float *getCurrentRotationDegreeAll();
+};
+
+SteppersGroup::SteppersGroup(ModbusClient *client, Stepper steppers_group[STEPPERS_COUNT])
+{
+    this->client = client;
+
+    for (int i = 0; i < STEPPERS_COUNT; i++)
+    {
+        this->steppers_group[i] = &steppers_group[i];
+    }
+};
+
+void SteppersGroup::setMaxSpeedAll(float rad_per_sec)
+{
+    uint16_t speed_in_uint_format[STEPPERS_COUNT * 2];
+    float speed = radiansToDegrees(rad_per_sec);
+
+    modbus_set_float(speed, speed_in_uint_format);
+
+    for (int i = 2; i < STEPPERS_COUNT * 2; i += 2)
+    {
+        speed_in_uint_format[i] = speed_in_uint_format[0];
+        speed_in_uint_format[i + 1] = speed_in_uint_format[1];
+    }
+
+    int succes = this->client->writeRegisters(0, speed_in_uint_format, 2 * STEPPERS_COUNT);
+};
+
+void SteppersGroup::setAccelerationAll(float rad_per_sec)
+{
+    uint16_t acceleration_in_uint_format[STEPPERS_COUNT * 2];
+    float acceleration = radiansToDegrees(rad_per_sec);
+
+    modbus_set_float(acceleration, acceleration_in_uint_format);
+
+    for (int i = 2; i < STEPPERS_COUNT * 2; i += 2)
+    {
+        acceleration_in_uint_format[i] = acceleration_in_uint_format[0];
+        acceleration_in_uint_format[i + 1] = acceleration_in_uint_format[1];
+    }
+
+    int succes = this->client->writeRegisters(STEPPERS_COUNT * 4, acceleration_in_uint_format, 2 * STEPPERS_COUNT);
+
+    if (succes == -1)
+    {
+        std::cout << "Error writing register" << std::endl;
+    }
+};
+
+// WIP
+void SteppersGroup::breakAll()
+{
+    // for (int i = 0; i < STEPPERS_COUNT; i++)
+    // {
+    //     this->steppers_group[i]->brake();
+    // }
+
+    uint8_t bits[STEPPERS_COUNT];
+    uint8_t zero = 1;
+    std::fill(bits, bits + STEPPERS_COUNT, zero);
+    int succes = this->client->writeBits(STEPPERS_COUNT, bits, STEPPERS_COUNT);
+};
