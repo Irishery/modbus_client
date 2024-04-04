@@ -3,11 +3,19 @@
 #include <modbusRegBank.h>
 #include <modbusSlave.h>
 #include "GyverStepper.h"
-#define STEPPERS_COUNT 2
+
+#define ENDSTOP_PIN1 10
+#define ENDSTOP_PIN2 11
+#define ENDSTOP_PIN3 12
+
+#define STEPPERS_COUNT 3
+#define ENDSTOPS_COUNT 3
+
 
 
 GStepper<STEPPER2WIRE> stepper1(200, 2, 3);
 GStepper<STEPPER2WIRE> stepper2(200, 4, 5);
+GStepper<STEPPER2WIRE> stepper3(200, 7, 8);
 //Setup the brewtrollers register bank
 //All of the data accumulated will be stored here
 modbusDevice regBank;
@@ -16,7 +24,7 @@ modbusSlave slave;
 
 void setup()
 {   
-  delay(3000);
+  // delay(5000);
 //Assign the modbus device ID.  
   regBank.setId(1);
   Serial.begin(9600);
@@ -27,9 +35,16 @@ void setup()
   stepper2.setRunMode(FOLLOW_POS);
   stepper2.setTargetDeg(0);
 
+  stepper3.setRunMode(FOLLOW_POS);
+  stepper3.setTargetDeg(0);
+
+  pinMode(ENDSTOP_PIN1, INPUT_PULLUP);
+  pinMode(ENDSTOP_PIN2, INPUT_PULLUP);
+  pinMode(ENDSTOP_PIN3, INPUT_PULLUP);
+
 
 // rotation command 1|0
-for (int i = 1; i <= STEPPERS_COUNT*2; i++) {
+for (int i = 1; i <= STEPPERS_COUNT*4; i++) {
     regBank.add(i);
 }
 
@@ -82,18 +97,38 @@ float modbus_get_float(const uint16_t *src)
     return f;
 }
 
-GStepper<STEPPER2WIRE> steppers[] = {stepper1, stepper2};
+GStepper<STEPPER2WIRE> steppers[] = {stepper1, stepper2, stepper3};
+int endstops[] = {ENDSTOP_PIN1, ENDSTOP_PIN2, ENDSTOP_PIN3};
 
 void loop()
 {
   for (int i = 0; i < STEPPERS_COUNT; i++) {
     int is_must_run = regBank.get(i + 1);
     int is_must_brake = regBank.get(STEPPERS_COUNT + i + 1);
+    int is_must_reset = regBank.get(STEPPERS_COUNT*2 + i + 1);
 
     if(is_must_brake)
     {
-      steppers[i].reset();
+      steppers[i].brake();
       regBank.set(STEPPERS_COUNT + i + 1, 0);
+      continue;
+    }
+
+    if(is_must_reset)
+    {
+      steppers[i].brake();
+      if (!steppers[i].tick()) {
+        steppers[i].setRunMode(KEEP_SPEED);
+        steppers[i].setSpeedDeg(90);
+        steppers[i].tick();
+      }
+
+      if (digitalRead(endstops[i])) {
+        steppers[i].reset();
+        steppers[i].setRunMode(FOLLOW_POS);
+        regBank.set(STEPPERS_COUNT*2 + i + 1, 0);
+      }
+
       continue;
     }
 
@@ -149,10 +184,10 @@ void loop()
     steppers[i].tick();
     if (steppers[i].getState()) 
     {
-      regBank.set(20 + i + 1, 1);
+      regBank.set(STEPPERS_COUNT*3 + i + 1, 1);
     } 
     else {
-      regBank.set(20 + i + 1, 0);
+      regBank.set(STEPPERS_COUNT*3 + i + 1, 0);
     }
   }
 

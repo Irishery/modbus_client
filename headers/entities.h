@@ -5,7 +5,7 @@
 #include <array>
 #include <math.h>
 
-#define STEPPERS_COUNT 2
+#define STEPPERS_COUNT 3
 
 // ------------ Registers scheme ------------
 // 1. Rotation Status Registers: 1 to STEPPERS_COUNT
@@ -125,6 +125,7 @@ public:
     void setAcceleration(float rad_per_sec_sq);
 
     void rotate(float degree);
+    void brake();
     void reset();
 
     float getCurrentPosition();
@@ -204,9 +205,19 @@ void Stepper::rotate(float radian)
     }
 };
 
-void Stepper::reset()
+void Stepper::brake()
 {
     int succes = this->client->writeBit(this->stepper_id + STEPPERS_COUNT, 1);
+    if (succes == -1)
+    {
+        fprintf(stderr, "Error writing bit: %s\n", modbus_strerror(errno));
+        // std::cout << "Error writing bit" << std::endl;
+    }
+}
+
+void Stepper::reset()
+{
+    int succes = this->client->writeBit(this->stepper_id + STEPPERS_COUNT*2, 1);
     if (succes == -1)
     {
         fprintf(stderr, "Error writing bit: %s\n", modbus_strerror(errno));
@@ -246,7 +257,7 @@ float Stepper::getCurrentRotationDegree()
 
 bool Stepper::getRotationStatus()
 {
-    uint8_t *rotation_status = this->client->readBits(this->stepper_id + 20);
+    uint8_t *rotation_status = this->client->readBits(this->stepper_id + STEPPERS_COUNT * 3);
 
     return *rotation_status;
 };
