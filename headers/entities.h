@@ -7,8 +7,16 @@
 
 #define STEPPERS_COUNT 3
 
+#define READY 0
+#define ROTATION 1
+#define CALIBRATION 2
+
 // ------------ Registers scheme ------------
-// 1. Rotation Status Registers: 1 to STEPPERS_COUNT
+// 1. Rotation Status Registers: 1 to STEPPERS_COUNT*4
+// 1.1 Starts rotation
+// 1.2 Stores info about ratation
+// 1.3 Initiates brake
+// 1.4 Initiates calibration
 // 2. Current Position Registers: 30001 to (30000 + STEPPERS_COUNT*2)
 // 3. Current Speed Registers: 40001 to (40000 + STEPPERS_COUNT*2)
 // 4. Rotation Degree Registers: (40001 + STEPPERS_COUNT*2) to (40000 + STEPPERS_COUNT*4)
@@ -132,7 +140,7 @@ public:
     float getCurrentSpeed();
     float getCurrentAcceleration();
     float getCurrentRotationDegree();
-    bool getRotationStatus();
+    int getStatus();
 };
 
 Stepper::Stepper(int id, ModbusClient *client)
@@ -217,7 +225,11 @@ void Stepper::brake()
 
 void Stepper::reset()
 {
-    int succes = this->client->writeBit(this->stepper_id + STEPPERS_COUNT*2, 1);
+    //TODO: это костыль, чтобы останавливать двигатель, если в момент вызова калибровки он уже крутился к цели
+    // Убрать костыль, если получилось мигрировать на GStepper2
+    this->brake();
+
+    int succes = this->client->writeBit(this->stepper_id + STEPPERS_COUNT * 2, 1);
     if (succes == -1)
     {
         fprintf(stderr, "Error writing bit: %s\n", modbus_strerror(errno));
@@ -255,14 +267,26 @@ float Stepper::getCurrentRotationDegree()
     return modbus_get_float(rotation_degree);
 };
 
-bool Stepper::getRotationStatus()
+int Stepper::getStatus()
 {
     uint8_t *rotation_status = this->client->readBits(this->stepper_id + STEPPERS_COUNT * 3);
+    uint8_t *calibration_status = this->client->readBits(this->stepper_id + STEPPERS_COUNT * 2);
 
-    return *rotation_status;
+    int status;
+
+    if (*calibration_status) {
+        return CALIBRATION;
+    }
+
+    if (*rotation_status) {
+        return ROTATION;
+    }
+
+    return READY;
 };
 
 // // ------------ Stepper Group ------------
+
 // class StepperGroup {
 //     private:
 //         std::array<Stepper*, 20> stepper_group;

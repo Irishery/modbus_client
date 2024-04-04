@@ -116,7 +116,6 @@ void loop()
 
     if(is_must_reset)
     {
-      steppers[i].brake();
       if (!steppers[i].tick()) {
         steppers[i].setRunMode(KEEP_SPEED);
         steppers[i].setSpeedDeg(90);
@@ -126,6 +125,7 @@ void loop()
       if (digitalRead(endstops[i])) {
         steppers[i].reset();
         steppers[i].setRunMode(FOLLOW_POS);
+        steppers[i].setTargetDeg(0);
         regBank.set(STEPPERS_COUNT*2 + i + 1, 0);
       }
 
