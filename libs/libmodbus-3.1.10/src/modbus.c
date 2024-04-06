@@ -1482,13 +1482,20 @@ int modbus_write_bits(modbus_t *ctx, int addr, int nb, const uint8_t *src)
     }
 
     rc = send_msg(ctx, req, req_length);
+
+    // printf("Req\n");
+    // for (i = 0; i < req_length; i++) {
+    //     printf("%02X ", req[i]);
+    // }
+    // printf("\n");
+    
     if (rc > 0) {
         uint8_t rsp[MAX_MESSAGE_LENGTH];
 
         rc = _modbus_receive_msg(ctx, rsp, MSG_CONFIRMATION);
-        if (rc == -1)
+        if (rc == -1) {
             return -1;
-
+        }
         rc = check_confirmation(ctx, req, rsp, rc);
     }
 

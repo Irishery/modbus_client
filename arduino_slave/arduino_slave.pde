@@ -102,6 +102,22 @@ void loop()
     int is_must_brake = regBank.get(STEPPERS_COUNT + i + 1);
     int is_must_reset = regBank.get(STEPPERS_COUNT*2 + i + 1);
 
+    // Serial.print("Stepper: ");
+    // Serial.println(i);
+
+    // Serial.print("MUST RUN: ");
+    // Serial.println(is_must_run);
+    
+    // Serial.print("MUST BRAKE: ");
+    // Serial.println(is_must_brake);
+
+    // Serial.print("MUST reset: ");
+    // Serial.println(is_must_reset);
+    
+    
+    // Serial.println("-------------------");
+
+
     if(is_must_brake)
     {
       steppers[i].brake();
