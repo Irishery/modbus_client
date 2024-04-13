@@ -3,30 +3,36 @@
 #include <modbusRegBank.h>
 #include <modbusSlave.h>
 #include "GyverStepper.h"
+#include <ModbusRTUSlave.h>
 
 #define ENDSTOP_PIN1 10
 #define ENDSTOP_PIN2 11
-#define ENDSTOP_PIN3 12
+// #define ENDSTOP_PIN3 12
 
-#define STEPPERS_COUNT 3
-#define ENDSTOPS_COUNT 3
+#define STEPPERS_COUNT 2
+#define ENDSTOPS_COUNT 2
 
 
 
 GStepper<STEPPER2WIRE> stepper1(200, 2, 3);
 GStepper<STEPPER2WIRE> stepper2(200, 4, 5);
-GStepper<STEPPER2WIRE> stepper3(200, 7, 8);
+// GStepper<STEPPER2WIRE> stepper2(200, 7, 8);
 //Setup the brewtrollers register bank
 //All of the data accumulated will be stored here
-modbusDevice regBank;
-//Create the modbus slave protocol handler
-modbusSlave slave;
+// modbusDevice regBank;
+// //Create the modbus slave protocol handler
+// modbusSlave slave;
+
+ModbusRTUSlave modbus(Serial);
+
+bool coils[STEPPERS_COUNT*4];
+uint16_t holdingRegisters[STEPPERS_COUNT*6];
+uint16_t inputRegisters[STEPPERS_COUNT*2];
 
 void setup()
 {   
   // delay(5000);
 //Assign the modbus device ID.  
-  regBank.setId(1);
   Serial.begin(9600);
 
   stepper1.setRunMode(FOLLOW_POS);
@@ -35,38 +41,14 @@ void setup()
   stepper2.setRunMode(FOLLOW_POS);
   stepper2.setTargetDeg(0);
 
-  stepper3.setRunMode(FOLLOW_POS);
-  stepper3.setTargetDeg(0);
-
   pinMode(ENDSTOP_PIN1, INPUT_PULLUP);
   pinMode(ENDSTOP_PIN2, INPUT_PULLUP);
-  pinMode(ENDSTOP_PIN3, INPUT_PULLUP);
+  // pinMode(ENDSTOP_PIN3, INPUT_PULLUP);
 
 
-// rotation command 1|0
-for (int i = 1; i <= STEPPERS_COUNT*4; i++) {
-    regBank.add(i);
-}
-
-// current position (each stepper takes a 2 registers (0, 1), (2, 3) etc.)
-for (int i = 1; i <= (STEPPERS_COUNT*2); i++) {
-    regBank.add(30000 + i);
-}
-
-// current speed (each stepper takes a 2 registers (0, 1), (2, 3) etc.)
-for (int i = 1; i <= (STEPPERS_COUNT*2); i++) {
-    regBank.add(40000 + i);
-}
-
-// rotation degree (each stepper takes a 2 registers (0, 1), (2, 3) etc.)
-for (int i = (STEPPERS_COUNT*2 + 1); i <= (STEPPERS_COUNT*4); i++) {
-    regBank.add(40000 + i);
-}
-
-// acceleration speed (each stepper takes a 2 registers (0, 1), (2, 3) etc.)
-for (int i = (STEPPERS_COUNT*4 + 1); i <= (STEPPERS_COUNT*6); i++) {
-    regBank.add(40000 + i);
-}
+modbus.configureCoils(coils, STEPPERS_COUNT*4);                       // bool array of coil values, number of coils
+modbus.configureHoldingRegisters(holdingRegisters, STEPPERS_COUNT*6); // unsigned 16 bit integer array of holding register values, number of holding registers
+modbus.configureInputRegisters(inputRegisters, STEPPERS_COUNT*2); 
 
 /*
 Assign the modbus device object to the protocol handler
@@ -74,11 +56,11 @@ This is where the protocol handler will look to read and write
 register data.  Currently, a modbus slave protocol handler may
 only have one device assigned to it.
 */
-  slave._device = &regBank;  
+//   slave._device = &regBank;  
 
-// Initialize the serial port for coms at 9600 baud  
-  slave.setBaud(115200);
-  // slave.setBaud(9600);   
+// // Initialize the serial port for coms at 9600 baud  
+  modbus.begin(1, 115200);
+  // modbus.begin(1, 9600);
 }
 
 float modbus_get_float(const uint16_t *src)
@@ -92,36 +74,20 @@ float modbus_get_float(const uint16_t *src)
     return f;
 }
 
-GStepper<STEPPER2WIRE> steppers[] = {stepper1, stepper2, stepper3};
-int endstops[] = {ENDSTOP_PIN1, ENDSTOP_PIN2, ENDSTOP_PIN3};
+GStepper<STEPPER2WIRE> steppers[] = {stepper1, stepper2};
+int endstops[] = {ENDSTOP_PIN1, ENDSTOP_PIN2};
 
 void loop()
 {
   for (int i = 0; i < STEPPERS_COUNT; i++) {
-    int is_must_run = regBank.get(i + 1);
-    int is_must_brake = regBank.get(STEPPERS_COUNT + i + 1);
-    int is_must_reset = regBank.get(STEPPERS_COUNT*2 + i + 1);
-
-    // Serial.print("Stepper: ");
-    // Serial.println(i);
-
-    // Serial.print("MUST RUN: ");
-    // Serial.println(is_must_run);
-    
-    // Serial.print("MUST BRAKE: ");
-    // Serial.println(is_must_brake);
-
-    // Serial.print("MUST reset: ");
-    // Serial.println(is_must_reset);
-    
-    
-    // Serial.println("-------------------");
-
+    int is_must_run = coils[i];
+    int is_must_brake = coils[STEPPERS_COUNT + i];
+    int is_must_reset = coils[STEPPERS_COUNT*2 + i];
 
     if(is_must_brake)
     {
       steppers[i].brake();
-      regBank.set(STEPPERS_COUNT + i + 1, 0);
+      coils[STEPPERS_COUNT + i] = 0;
       continue;
     }
 
@@ -137,15 +103,16 @@ void loop()
         steppers[i].reset();
         steppers[i].setRunMode(FOLLOW_POS);
         steppers[i].setTargetDeg(0);
-        regBank.set(STEPPERS_COUNT*2 + i + 1, 0);
+        coils[STEPPERS_COUNT*2 + i] = 0;
       }
 
       continue;
     }
 
+
     if(is_must_run) 
     {
-      int float_id = i + i + 1;
+      int float_id = i + i;
 
       // Serial.println("CURRENT TARGET");
       // Serial.println(steppers[i].getTargetDeg());
@@ -153,40 +120,28 @@ void loop()
       // Serial.println("-----------");
 
       uint16_t speed[2];
-      speed[0] = regBank.get(40000 + float_id);
-      speed[1] = regBank.get(40000 + float_id + 1);
+      speed[0] = holdingRegisters[float_id];
+      speed[1] = holdingRegisters[float_id + 1];
       float speed_num = modbus_get_float(speed);
-      
-      // Serial.println("SPEED");
-      // Serial.println(speed_num);
-      // Serial.println("-----------");
 
       uint16_t degree[2];
-      degree[0] = regBank.get(40000 + STEPPERS_COUNT*2 + float_id);
-      degree[1] = regBank.get(40000 + STEPPERS_COUNT*2 + float_id + 1);
+      degree[0] = holdingRegisters[STEPPERS_COUNT*2 + float_id];
+      degree[1] = holdingRegisters[STEPPERS_COUNT*2 + float_id + 1];
       float degree_num = modbus_get_float(degree);
 
-      // Serial.println("DEGREE");
-      // Serial.println(degree_num);
-      // Serial.println("-----------");
-
       uint16_t acceleration[2];
-      acceleration[0] = regBank.get(40000 + STEPPERS_COUNT*4 + float_id);
-      acceleration[1] = regBank.get(40000 + STEPPERS_COUNT*4 + float_id + 1);
+      acceleration[0] = holdingRegisters[STEPPERS_COUNT*4 + float_id];
+      acceleration[1] = holdingRegisters[STEPPERS_COUNT*4 + float_id + 1];
       float acceleration_num = modbus_get_float(acceleration);
-
-      // Serial.println("ACCELERATION");
-      // Serial.println(acceleration_num);
-      // Serial.println("-----------");
 
       steppers[i].setAcceleration(acceleration_num);
       steppers[i].setMaxSpeedDeg(speed_num);
 
-      int is_must_run = regBank.get(i + 1);
+      int is_must_run = coils[i];
 
       steppers[i].setTargetDeg(degree_num, ABSOLUTE);
 
-      regBank.set(i + 1, 0);
+      coils[i] = 0;
     }
   }
 
@@ -195,16 +150,16 @@ void loop()
     steppers[i].tick();
     if (steppers[i].getState()) 
     {
-      regBank.set(STEPPERS_COUNT*3 + i + 1, 1);
+      coils[STEPPERS_COUNT*3 + i] = 1;
     } 
     else {
-      regBank.set(STEPPERS_COUNT*3 + i + 1, 0);
+      coils[STEPPERS_COUNT*3 + i] = 0;
     }
   }
 
   for(int i=0;i<STEPPERS_COUNT;i++)
   {
-      int float_id = i + i + 1;
+      int float_id = i + i;
       union {
         float asFloat;
         int asInt[2];
@@ -213,9 +168,9 @@ void loop()
       uint16_t position[2];
 
       flreg.asFloat = steppers[i].getCurrentDeg();
-      regBank.set(30000 + float_id, flreg.asInt[0]);
-      regBank.set((30000 + float_id + 1), flreg.asInt[1]);
+      inputRegisters[float_id] = flreg.asInt[0];
+      inputRegisters[float_id + 1] = flreg.asInt[1];
   }
 
-  slave.run();
+  modbus.poll();
 }

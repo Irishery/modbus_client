@@ -5,7 +5,7 @@
 #include <array>
 #include <math.h>
 
-#define STEPPERS_COUNT 3
+#define STEPPERS_COUNT 2
 
 #define READY 0
 #define ROTATION 1
