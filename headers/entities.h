@@ -5,7 +5,7 @@
 #include <array>
 #include <math.h>
 
-#define STEPPERS_COUNT 2
+#define STEPPERS_COUNT 6
 
 #define READY 0
 #define ROTATION 1
@@ -180,7 +180,6 @@ void Stepper::setRotationDegree(float radian)
     }
 };
 
-// TODO: make a logger
 void Stepper::setMaxSpeed(float rad_per_sec)
 {
     uint16_t speed_in_uint_format[2];
@@ -243,7 +242,6 @@ void Stepper::reset()
     if (success == -1)
     {
         fprintf(stderr, "Error writing bit: %s\n", modbus_strerror(errno));
-        // std::cout << "Error writing bit" << std::endl;
     }
 };
 
@@ -307,7 +305,6 @@ public:
 
     SteppersGroup(ModbusClient *client, Stepper steppers[STEPPERS_COUNT]);
 
-    // TODO: think about troubleshooting when param sets to a group
     void setMaxSpeedAll(float rad_per_sec);
     void setAccelerationAll(float rad_per_sec);
 

@@ -5,23 +5,21 @@
 #include "GyverStepper.h"
 #include <ModbusRTUSlave.h>
 
-#define ENDSTOP_PIN1 10
-#define ENDSTOP_PIN2 11
-// #define ENDSTOP_PIN3 12
+const int ENDSTOP_PIN1 = A0;
+const int ENDSTOP_PIN2 = A1;
+const int ENDSTOP_PIN3 = A2;
+const int ENDSTOP_PIN4 = A3;
+const int ENDSTOP_PIN5 = A4;
 
-#define STEPPERS_COUNT 2
-#define ENDSTOPS_COUNT 2
+#define STEPPERS_COUNT 6
+#define ENDSTOPS_COUNT 5
 
-
-
-GStepper<STEPPER2WIRE> stepper1(200, 2, 3);
-GStepper<STEPPER2WIRE> stepper2(200, 4, 5);
-// GStepper<STEPPER2WIRE> stepper2(200, 7, 8);
-//Setup the brewtrollers register bank
-//All of the data accumulated will be stored here
-// modbusDevice regBank;
-// //Create the modbus slave protocol handler
-// modbusSlave slave;
+GStepper<STEPPER2WIRE> stepper1(3200, 8, A6);
+GStepper<STEPPER2WIRE> stepper2(3200, 10, 11);
+GStepper<STEPPER2WIRE> stepper3(3200, 12, 13);
+GStepper<STEPPER2WIRE> stepper4(3200, 2, 3);
+GStepper<STEPPER2WIRE> stepper5(3200, 6, 7);
+GStepper<STEPPER2WIRE> stepper6(3200, 4, 5);
 
 ModbusRTUSlave modbus(Serial);
 
@@ -30,37 +28,21 @@ uint16_t holdingRegisters[STEPPERS_COUNT*6];
 uint16_t inputRegisters[STEPPERS_COUNT*2];
 
 void setup()
-{   
-  // delay(5000);
-//Assign the modbus device ID.  
+{
   Serial.begin(9600);
 
-  stepper1.setRunMode(FOLLOW_POS);
-  stepper1.setTargetDeg(0);
-
-  stepper2.setRunMode(FOLLOW_POS);
-  stepper2.setTargetDeg(0);
-
-  pinMode(ENDSTOP_PIN1, INPUT_PULLUP);
-  pinMode(ENDSTOP_PIN2, INPUT_PULLUP);
-  // pinMode(ENDSTOP_PIN3, INPUT_PULLUP);
+  pinMode(ENDSTOP_PIN1, INPUT);
+  pinMode(ENDSTOP_PIN2, INPUT);
+  pinMode(ENDSTOP_PIN3, INPUT);
+  pinMode(ENDSTOP_PIN4, INPUT);
+  pinMode(ENDSTOP_PIN5, INPUT);
 
 
-modbus.configureCoils(coils, STEPPERS_COUNT*4);                       // bool array of coil values, number of coils
-modbus.configureHoldingRegisters(holdingRegisters, STEPPERS_COUNT*6); // unsigned 16 bit integer array of holding register values, number of holding registers
-modbus.configureInputRegisters(inputRegisters, STEPPERS_COUNT*2); 
-
-/*
-Assign the modbus device object to the protocol handler
-This is where the protocol handler will look to read and write
-register data.  Currently, a modbus slave protocol handler may
-only have one device assigned to it.
-*/
-//   slave._device = &regBank;  
-
-// // Initialize the serial port for coms at 9600 baud  
+  modbus.configureCoils(coils, STEPPERS_COUNT*4);                       // bool array of coil values, number of coils
+  modbus.configureHoldingRegisters(holdingRegisters, STEPPERS_COUNT*6); // unsigned 16 bit integer array of holding register values, number of holding registers
+  modbus.configureInputRegisters(inputRegisters, STEPPERS_COUNT*2); 
+  
   modbus.begin(1, 115200);
-  // modbus.begin(1, 9600);
 }
 
 float modbus_get_float(const uint16_t *src)
@@ -74,8 +56,9 @@ float modbus_get_float(const uint16_t *src)
     return f;
 }
 
-GStepper<STEPPER2WIRE> steppers[] = {stepper1, stepper2};
-int endstops[] = {ENDSTOP_PIN1, ENDSTOP_PIN2};
+GStepper<STEPPER2WIRE> steppers[] = {stepper1, stepper2, stepper3, stepper4, stepper5, stepper6};
+int endstops[] = {ENDSTOP_PIN1, ENDSTOP_PIN2, ENDSTOP_PIN3, ENDSTOP_PIN4, ENDSTOP_PIN5};
+int endstops_type[] = {1, 1, 0, 0, 0}; // we have didffenet endstops models, so there is a need to separate conditions of end
 
 void loop()
 {
@@ -99,7 +82,7 @@ void loop()
         steppers[i].tick();
       }
 
-      if (digitalRead(endstops[i])) {
+      if ((digitalRead(endstops[i]) && endstops_type[i]) || (!digitalRead(endstops[i]) && !endstops_type[i])) {
         steppers[i].reset();
         steppers[i].setRunMode(FOLLOW_POS);
         steppers[i].setTargetDeg(0);
@@ -113,11 +96,6 @@ void loop()
     if(is_must_run) 
     {
       int float_id = i + i;
-
-      // Serial.println("CURRENT TARGET");
-      // Serial.println(steppers[i].getTargetDeg());
-      // Serial.println(steppers[i].getTarget());
-      // Serial.println("-----------");
 
       uint16_t speed[2];
       speed[0] = holdingRegisters[float_id];
