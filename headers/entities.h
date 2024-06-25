@@ -132,6 +132,97 @@ int ModbusClient::writeBits(int address, uint8_t *values, int count)
     return success;
 };
 
+// ------------- Servo -------------
+class Servo
+{
+public:
+    // int servo_id;
+    // int float_id;
+
+    ModbusClient *client;
+    Servo(ModbusClient *client);
+
+    void setPosition(float radian);
+    void setMaxSpeed(float rad_per_sec);
+    void setAcceleration(float rad_per_sec_sq);
+
+    void rotate(float radians);
+    void brake();
+
+    float getCurrentPosition();
+    float getCurrentSpeed();
+    float getCurrentAcceleration();
+
+    int getStatus();
+};
+
+Servo::Servo(ModbusClient *client)
+{
+    this->client = client;
+};
+
+void Servo::setMaxSpeed(float rad_per_sec)
+{
+    uint16_t speed_in_uint_format[2];
+    float speed = radiansToDegrees(rad_per_sec);
+
+    modbus_set_float(speed, speed_in_uint_format);
+
+    int success = this->client->writeRegisters(STEPPERS_COUNT * 6 + 1, speed_in_uint_format, 2);
+    if (success == -1)
+    {
+        fprintf(stderr, "Error writing register: %s\n", modbus_strerror(errno));
+    }
+};
+
+void Servo::setPosition(float radian)
+{
+    uint16_t radian_in_uint_format[2];
+    float degree = radiansToDegrees(radian);
+
+    modbus_set_float(degree, radian_in_uint_format);
+
+    int success = this->client->writeRegisters(STEPPERS_COUNT * 6 + 1 + 2, radian_in_uint_format, 2);
+    if (success == -1)
+    {
+        fprintf(stderr, "Error writing register: %s\n", modbus_strerror(errno));
+    }
+};
+
+void Servo::setAcceleration(float rad_per_sec_sq)
+{
+    uint16_t acceleration_in_uint_format[2];
+    float acceleration = radiansToDegrees(rad_per_sec_sq);
+
+    modbus_set_float(acceleration, acceleration_in_uint_format);
+
+    int success = this->client->writeRegisters(STEPPERS_COUNT * 6 + 4, acceleration_in_uint_format, 2);
+    if (success == -1)
+    {
+        fprintf(stderr, "Error writing register: %s\n", modbus_strerror(errno));
+    }
+};
+
+// WIP
+float Servo::getCurrentPosition()
+{
+    uint16_t *position = this->client->readInputRegisters(STEPPERS_COUNT * 2, 2);
+    float degree = modbus_get_float(position);
+
+    return degree;
+};
+
+void Servo::rotate(float radians)
+{
+    this->setPosition(radians);
+
+    int success = this->client->writeBit(STEPPERS_COUNT * 4 + 1, 1);
+    if (success == -1)
+    {
+        fprintf(stderr, "Error writing bit: %s\n", modbus_strerror(errno));
+        // std::cout << "Error writing bit" << std::endl;
+    }
+};
 // ------------ Stepper ------------
 
 class Stepper
@@ -154,6 +245,7 @@ public:
     float getCurrentPosition();
     float getCurrentSpeed();
     float getCurrentAcceleration();
+    // TODO: переименовать функции по типу той, что снизу на getCurrentTargetDegree или подобное
     float getCurrentRotationDegree();
     int getStatus();
 };
@@ -245,8 +337,6 @@ void Stepper::reset()
     }
 };
 
-// TODO: think if its correctly to use modbus directly from Stepper class
-// TODO: sometimes it returns 0 when it shouldnt - figure out the reason
 float Stepper::getCurrentPosition()
 {
     uint16_t *position = this->client->readInputRegisters(this->stepper_id * 2, 2);
@@ -311,10 +401,10 @@ public:
     void breakAll();
     void resetAll();
 
-    float* getCurrentPositionAll();
-    float* getCurrentSpeedAll();
-    float* getCurrentAccelerationAll();
-    float* getCurrentRotationDegreeAll();
+    float *getCurrentPositionAll();
+    float *getCurrentSpeedAll();
+    float *getCurrentAccelerationAll();
+    float *getCurrentRotationDegreeAll();
 };
 
 SteppersGroup::SteppersGroup(ModbusClient *client, Stepper steppers[STEPPERS_COUNT])
@@ -397,9 +487,9 @@ void SteppersGroup::resetAll()
     }
 };
 
-float* SteppersGroup::getCurrentPositionAll()
+float *SteppersGroup::getCurrentPositionAll()
 {
-    float* current_positions = new float[STEPPERS_COUNT];
+    float *current_positions = new float[STEPPERS_COUNT];
 
     for (int i = 0; i < STEPPERS_COUNT; i++)
     {
@@ -409,9 +499,9 @@ float* SteppersGroup::getCurrentPositionAll()
     return current_positions;
 };
 
-float* SteppersGroup::getCurrentSpeedAll()
+float *SteppersGroup::getCurrentSpeedAll()
 {
-    float* current_speeds = new float[STEPPERS_COUNT];
+    float *current_speeds = new float[STEPPERS_COUNT];
 
     for (int i = 0; i < STEPPERS_COUNT; i++)
     {
@@ -421,9 +511,9 @@ float* SteppersGroup::getCurrentSpeedAll()
     return current_speeds;
 };
 
-float* SteppersGroup::getCurrentAccelerationAll()
+float *SteppersGroup::getCurrentAccelerationAll()
 {
-    float* current_accelerations = new float[STEPPERS_COUNT];
+    float *current_accelerations = new float[STEPPERS_COUNT];
 
     for (int i = 0; i < STEPPERS_COUNT; i++)
     {

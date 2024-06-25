@@ -19,10 +19,19 @@ int main(void)
     Stepper *stepper4 = new Stepper(3, client);
     Stepper *stepper5 = new Stepper(4, client);   
     Stepper *stepper6 = new Stepper(5, client);
+    Servo *servo = new Servo(client);
 
     Stepper steppers[] = {*stepper1, *stepper2, *stepper3, *stepper4, *stepper5, *stepper6};
 
     SteppersGroup *group = new SteppersGroup(client, steppers);
     group->setMaxSpeedAll(M_PI);
-    group->resetAll();
+    // group->resetAll();
+    // stepper6->rotate(-0.2);
+    // stepper2->rotate(3 * 5);
+    servo->setMaxSpeed(1);
+    // servo->setAcceleration(0);
+    // 1.74533
+    // servo->rotate(1.74533);
+    std::cout << servo->getCurrentPosition() << std::endl;
+    // servo->rotate(0);
 }
