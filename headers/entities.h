@@ -152,6 +152,7 @@ public:
     float getCurrentPosition();
     float getCurrentSpeed();
     float getCurrentAcceleration();
+    float getLastTargetDegree();
 
     int getStatus();
 };
@@ -168,7 +169,7 @@ void Servo::setMaxSpeed(float rad_per_sec)
 
     modbus_set_float(speed, speed_in_uint_format);
 
-    int success = this->client->writeRegisters(STEPPERS_COUNT * 6 + 1, speed_in_uint_format, 2);
+    int success = this->client->writeRegisters(STEPPERS_COUNT * 6, speed_in_uint_format, 2);
     if (success == -1)
     {
         fprintf(stderr, "Error writing register: %s\n", modbus_strerror(errno));
@@ -182,7 +183,7 @@ void Servo::setPosition(float radian)
 
     modbus_set_float(degree, radian_in_uint_format);
 
-    int success = this->client->writeRegisters(STEPPERS_COUNT * 6 + 1 + 2, radian_in_uint_format, 2);
+    int success = this->client->writeRegisters(STEPPERS_COUNT * 6 + 2, radian_in_uint_format, 2);
     if (success == -1)
     {
         fprintf(stderr, "Error writing register: %s\n", modbus_strerror(errno));
@@ -203,26 +204,65 @@ void Servo::setAcceleration(float rad_per_sec_sq)
     }
 };
 
-// WIP
 float Servo::getCurrentPosition()
 {
     uint16_t *position = this->client->readInputRegisters(STEPPERS_COUNT * 2, 2);
-    float degree = modbus_get_float(position);
 
-    return degree;
+    return modbus_get_float(position);
+};
+
+float Servo::getCurrentSpeed()
+{
+    uint16_t *speed = this->client->readRegisters(STEPPERS_COUNT * 6, 2);
+
+    return modbus_get_float(speed);
+};
+
+float Servo::getLastTargetDegree()
+{
+    uint16_t *degree = this->client->readRegisters(STEPPERS_COUNT * 6 + 2, 2);
+
+    return modbus_get_float(degree);
+};
+
+float Servo::getCurrentAcceleration()
+{
+    uint16_t *acceleration = this->client->readRegisters(STEPPERS_COUNT * 6 + 4, 2);
+
+    return modbus_get_float(acceleration);
 };
 
 void Servo::rotate(float radians)
 {
     this->setPosition(radians);
 
+    int success = this->client->writeBit(STEPPERS_COUNT * 4, 1);
+    if (success == -1)
+    {
+        fprintf(stderr, "Error writing bit: %s\n", modbus_strerror(errno));
+    }
+};
+
+void Servo::brake()
+{
     int success = this->client->writeBit(STEPPERS_COUNT * 4 + 1, 1);
     if (success == -1)
     {
         fprintf(stderr, "Error writing bit: %s\n", modbus_strerror(errno));
-        // std::cout << "Error writing bit" << std::endl;
     }
 };
+
+int Servo::getStatus()
+{
+    uint8_t *status = this->client->readBits(STEPPERS_COUNT * 4 + 2);
+    if (*status) {
+        return ROTATION;
+    }
+
+    return READY;
+};
+
+
 // ------------ Stepper ------------
 
 class Stepper
@@ -245,8 +285,7 @@ public:
     float getCurrentPosition();
     float getCurrentSpeed();
     float getCurrentAcceleration();
-    // TODO: переименовать функции по типу той, что снизу на getCurrentTargetDegree или подобное
-    float getCurrentRotationDegree();
+    float getLastTargetDegree();
     int getStatus();
 };
 
@@ -358,7 +397,7 @@ float Stepper::getCurrentAcceleration()
     return modbus_get_float(acceleration);
 };
 
-float Stepper::getCurrentRotationDegree()
+float Stepper::getLastTargetDegree()
 {
     uint16_t *rotation_degree = this->client->readRegisters(this->stepper_id * 2 + STEPPERS_COUNT * 2, 2);
 
@@ -404,7 +443,7 @@ public:
     float *getCurrentPositionAll();
     float *getCurrentSpeedAll();
     float *getCurrentAccelerationAll();
-    float *getCurrentRotationDegreeAll();
+    float *getLastTargetDegreeAll();
 };
 
 SteppersGroup::SteppersGroup(ModbusClient *client, Stepper steppers[STEPPERS_COUNT])

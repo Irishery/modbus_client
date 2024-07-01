@@ -9,6 +9,7 @@
 
 int main(void)
 {
+    // TODO: refactor getCurrentPosition funcs due to transfer value
     // TODO: delete print of raw modbus request
 
     ModbusClient *client = new ModbusClient("/dev/ttyUSB0");
@@ -26,12 +27,20 @@ int main(void)
     SteppersGroup *group = new SteppersGroup(client, steppers);
     group->setMaxSpeedAll(M_PI);
     // group->resetAll();
-    // stepper6->rotate(-0.2);
     // stepper2->rotate(3 * 5);
-    servo->setMaxSpeed(1);
+    servo->setMaxSpeed(2);
     // servo->setAcceleration(0);
     // 1.74533
+    // stepper2->rotate(0);
+    // std::cout << stepper5->getCurrentPosition() << std::endl;
     // servo->rotate(1.74533);
+    // servo->setPosition(0);
+    // sleep(2);
+
+    // servo->brake();
+
+    // float pos = servo->getCurrentPosition();
+    // std::cout << servo->getStatus() << std::endl;
     std::cout << servo->getCurrentPosition() << std::endl;
     // servo->rotate(0);
 }

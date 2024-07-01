@@ -48,6 +48,7 @@ void setup()
   modbus.configureInputRegisters(inputRegisters, STEPPERS_COUNT*2 + 2); 
   
   modbus.begin(1, 115200);
+  // modbus.begin(1, 9600);
 }
 
 float modbus_get_float(const uint16_t *src)
@@ -67,11 +68,6 @@ int endstops_type[] = {1, 1, 0, 0, 0}; // we have didffenet endstops models, so 
 
 void loop()
 {
-  // if (!servo.tick()) {
-  //   servo.setTargetDeg(40.5);
-  //   servo.tick();
-  // }
-  // servo.tick();
   for (int i = 0; i < STEPPERS_COUNT; i++) {
     int is_must_run = coils[i];
     int is_must_brake = coils[STEPPERS_COUNT + i];
@@ -158,35 +154,43 @@ void loop()
   }
 
   // Servo
-  int is_servo_must_run = coils[STEPPERS_COUNT*4 + 1];
-  int is_servo_must_brake = coils[STEPPERS_COUNT*4 + 2];
+  int is_servo_must_run = coils[STEPPERS_COUNT*4];
+  int is_servo_must_brake = coils[STEPPERS_COUNT*4 + 1];
 
-  if (is_servo_must_run) {
+  if (is_servo_must_brake) 
+  {
+    servo.stop();
+    coils[STEPPERS_COUNT*4] = 0;
+    coils[STEPPERS_COUNT*4 + 1] = 0;
+  }
+
+  if (is_servo_must_run) 
+  {
+      servo.start();
 
       uint16_t speed[2];
-      speed[0] = holdingRegisters[STEPPERS_COUNT*6 + 1];
-      speed[1] = holdingRegisters[STEPPERS_COUNT*6 + 2];
+      speed[0] = holdingRegisters[STEPPERS_COUNT*6];
+      speed[1] = holdingRegisters[STEPPERS_COUNT*6 + 1];
       float speed_num = modbus_get_float(speed);
 
       uint16_t degree[2];
-      degree[0] = holdingRegisters[STEPPERS_COUNT*6 + 3];
-      degree[1] = holdingRegisters[STEPPERS_COUNT*6 + 4];
+      degree[0] = holdingRegisters[STEPPERS_COUNT*6 + 2];
+      degree[1] = holdingRegisters[STEPPERS_COUNT*6 + 3];
       float degree_num = modbus_get_float(degree);
 
       uint16_t acceleration[2];
-      acceleration[0] = holdingRegisters[STEPPERS_COUNT*6 + 5];
-      acceleration[1] = holdingRegisters[STEPPERS_COUNT*6 + 6];
+      acceleration[0] = holdingRegisters[STEPPERS_COUNT*6 + 4];
+      acceleration[1] = holdingRegisters[STEPPERS_COUNT*6 + 5];
       float acceleration_num = modbus_get_float(acceleration);
 
       servo.setSpeed(speed_num);
       servo.setAccel(acceleration_num);
       servo.setTargetDeg(degree_num);
 
-      coils[STEPPERS_COUNT*4 + 1] = 0;
+      coils[STEPPERS_COUNT*4] = 0;
 
   }
 
-  // wip
   union {
     float asFloat;
     int asInt[2];
@@ -195,10 +199,16 @@ void loop()
   uint16_t position[2];
 
   flreg.asFloat = servo.getCurrentDeg();
-  inputRegisters[STEPPERS_COUNT*2 + 1] = flreg.asInt[0];
-  inputRegisters[STEPPERS_COUNT*2 + 2] = flreg.asInt[1];
+  inputRegisters[STEPPERS_COUNT*2] = flreg.asInt[0];
+  inputRegisters[STEPPERS_COUNT*2 + 1] = flreg.asInt[1];
 
-
+  if (!servo.tick())
+  {
+    coils[STEPPERS_COUNT*4 + 2] = 1;
+  } else 
+  {
+    coils[STEPPERS_COUNT*4 + 2] = 0;
+  }
   servo.tick();
 
   modbus.poll();
