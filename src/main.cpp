@@ -36,8 +36,9 @@ int main(void)
     // stepper5->rotate(-1);
     // stepper6->rotate(1);
 
-    stepper5->rotateNew(-4, -4);
-    
+    //stepper5->rotateNew(-2, -2);
+    stepper5->rotate(1);
+    stepper6->rotate(6.28);
 
     // servo->setAcceleration(0);
     // 1.74533

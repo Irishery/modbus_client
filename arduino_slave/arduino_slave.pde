@@ -82,7 +82,18 @@ int get_action() {
 }
 int endstops[] = {ENDSTOP_PIN1, ENDSTOP_PIN2, ENDSTOP_PIN3, ENDSTOP_PIN4, ENDSTOP_PIN5};
 int endstops_type[] = {1, 1, 0, 0, 0}; // we have didffenet endstops models, so there is a need to separate conditions of end
-int last_action = -1;
+
+float target4_prev = 0;
+float cur4_prev = 0;
+float current4 = 0;
+float target5_prev = 0;
+float cur5_prev = 0;
+float current5 = 0;
+float dtarget4 = 0;
+float dtarget5 = 0;
+
+float dtarget4_prev = 0;
+float dtarget5_prev = 0;
 
 void loop() 
 {
@@ -122,6 +133,7 @@ void loop()
         // steppers[5].tick();
         // stepper6.tick();
         steppers[i].reset();
+        
         steppers[i].setRunMode(FOLLOW_POS);
         steppers[i].setTargetDeg(0);
         coils[STEPPERS_COUNT*2 + i] = 0;
@@ -153,7 +165,13 @@ void loop()
 
       steppers[i].setAcceleration(acceleration_num);
       steppers[i].setMaxSpeedDeg(speed_num);
-      steppers[i].setTargetDeg(degree_num, ABSOLUTE);
+
+      if(i==4 || i==5)
+      {
+
+      }
+      else
+        steppers[i].setTargetDeg(degree_num, ABSOLUTE);
 
       coils[i] = 0;
     }
@@ -176,120 +194,90 @@ void loop()
   }
 
   int action = get_action();
-  // Serial.println("ACTIONS");
-  // Serial.println("CURRENT");
-  // Serial.println(action);
-  // Serial.println(last_action);
-  // Serial.println("--------");
-  // if (action != last_action) {
-  //   if (last_action == 2 && action == 1) {
-  //     // Serial.println("PING1");
-  //     // From rotation to leaning
-  //     uint16_t input_reg5[2] = {inputRegisters[STEPPERS_COUNT * 2 - 4], inputRegisters[STEPPERS_COUNT * 2 - 3]};
-  //     steppers[4].setCurrentDeg(modbus_get_float(input_reg5));
-  //     steppers[5].setCurrentDeg(-modbus_get_float(input_reg5));
-  //   } else if (last_action == 1 && action == 2) {
-  //     // Serial.println("PING2");
-  //     // From leaning to rotation
-  //     uint16_t input_reg6[2] = {inputRegisters[STEPPERS_COUNT * 2 - 2], inputRegisters[STEPPERS_COUNT * 2 - 1]};
-  //     steppers[4].setCurrentDeg(modbus_get_float(input_reg6));
-  //     steppers[5].setCurrentDeg(modbus_get_float(input_reg6));
-  //   }
-  //   last_action = action;
-  // }
 
+  uint16_t degree[2];
+  degree[0] = holdingRegisters[STEPPERS_COUNT*2+8];
+  degree[1] = holdingRegisters[STEPPERS_COUNT*2 + 8 + 1];
+  float target4 = modbus_get_float(degree);
+  degree[0] = holdingRegisters[STEPPERS_COUNT*2+10];
+  degree[1] = holdingRegisters[STEPPERS_COUNT*2 + 10 + 1];
+  float target5 = modbus_get_float(degree);
 
-  if (action == 1) { // Leaning
-    // Serial.println("PING1");
-    if (steppers[4].getCurrentDeg() == steppers[5].getCurrentDeg()) {
-      // Serial.println("PING2");
-      uint16_t input_reg5[2] = {inputRegisters[STEPPERS_COUNT * 2 - 4], inputRegisters[STEPPERS_COUNT * 2 - 3]};
-      // Serial.println(modbus_get_float(input_reg5));
-      steppers[4].reset();
-      steppers[5].reset();
-  
-      steppers[4].setMaxSpeedDeg(200);
-      steppers[5].setMaxSpeedDeg(200);
-      steppers[4].setRunMode(FOLLOW_POS);
-      steppers[5].setRunMode(FOLLOW_POS);
-      
+  float cur4 = steppers[4].getCurrentDeg();
+  float dcur4 = cur4 - cur4_prev;
 
-      uint16_t degree[2];
-      degree[0] = holdingRegisters[STEPPERS_COUNT*2+8];
-      degree[1] = holdingRegisters[STEPPERS_COUNT*2 + 8 + 1];
-      float degree_num = modbus_get_float(degree);
-      steppers[4].setTargetDeg(degree_num);
-      degree[0] = holdingRegisters[STEPPERS_COUNT*2+10];
-      degree[1] = holdingRegisters[STEPPERS_COUNT*2 + 10 + 1];
-      degree_num = modbus_get_float(degree);
-      steppers[5].setTargetDeg(degree_num);
+  float cur5 = steppers[5].getCurrentDeg();
+  float dcur5 = cur5 - cur5_prev;
 
-      steppers[4].setCurrentDeg(modbus_get_float(input_reg5));
-      steppers[5].setCurrentDeg(-modbus_get_float(input_reg5));
-      
-      delay(1);
-    }
-    union {
-      float asFloat;
-      int asInt[2];
-    } flreg;
-    flreg.asFloat = steppers[4].getCurrentDeg();
-    // Serial.println(steppers[4].getCurrentDeg());
-    inputRegisters[STEPPERS_COUNT * 2 - 4] = flreg.asInt[0];
-    inputRegisters[STEPPERS_COUNT * 2 - 3] = flreg.asInt[1];
+  //current4 + dcur;
+  union {
+    float asFloat;
+    int asInt[2];
+  } flreg1;
+  flreg1.asFloat = current4 + dtarget4*dcur4/(dtarget4+dtarget5+0.0001);
+  inputRegisters[STEPPERS_COUNT * 2 - 4] = flreg1.asInt[0];
+  inputRegisters[STEPPERS_COUNT * 2 - 3] = flreg1.asInt[1];
+  union {
+    float asFloat;
+    int asInt[2];
+  } flreg2;
+  flreg2.asFloat = current5 + dtarget5*dcur5/(-dtarget4+dtarget5+0.0001);
+  inputRegisters[STEPPERS_COUNT * 2 - 2] = flreg2.asInt[0];
+  inputRegisters[STEPPERS_COUNT * 2 - 1] = flreg2.asInt[1];
+
+  /*if (target4 != target4_prev && target5 == target5_prev) 
+  { 
+    float dtarget = target4 - target4_prev;
+    target4_prev = target4;
+    current4 += dcur4;
+    cur4_prev = cur4;
+
+    steppers[4].setTargetDeg(dtarget, RELATIVE);
+    steppers[5].setTargetDeg(-dtarget, RELATIVE);
   }
 
-  if (action == 2) { // Rotation
-    // Serial.println("PING3");
-    if (steppers[4].getCurrentDeg() == -steppers[5].getCurrentDeg()) {
-      // Serial.println("PING4");
-      uint16_t input_reg6[2] = {inputRegisters[STEPPERS_COUNT * 2 - 2], inputRegisters[STEPPERS_COUNT * 2 - 1]};
-      // Serial.println(modbus_get_float(input_reg6));
-      steppers[4].reset();
-      steppers[5].reset();
-      
-      steppers[4].setMaxSpeedDeg(200);
-      steppers[5].setMaxSpeedDeg(200);
-      steppers[4].setRunMode(FOLLOW_POS);
-      steppers[5].setRunMode(FOLLOW_POS);
+  if (target5 != target5_prev && target4 == target4_prev) 
+  { 
+    float dtarget = target5 - target5_prev;
+    target5_prev = target5;
+    current5 += dcur5;
+    cur5_prev = cur5;
 
-      uint16_t degree[2];
-      degree[0] = holdingRegisters[STEPPERS_COUNT*2+8];
-      degree[1] = holdingRegisters[STEPPERS_COUNT*2 + 8 + 1];
-      float degree_num = modbus_get_float(degree);
-      steppers[4].setTargetDeg(degree_num);
-      degree[0] = holdingRegisters[STEPPERS_COUNT*2+10];
-      degree[1] = holdingRegisters[STEPPERS_COUNT*2 + 10 + 1];
-      degree_num = modbus_get_float(degree);
-      steppers[5].setTargetDeg(degree_num);
+    steppers[4].setTargetDeg(dtarget, RELATIVE);
+    steppers[5].setTargetDeg(dtarget, RELATIVE);
+  }*/
 
-      steppers[4].setCurrentDeg(modbus_get_float(input_reg6));
-      steppers[5].setCurrentDeg(modbus_get_float(input_reg6));
+  if(abs(target4 - target4_prev)>0.01 && abs(target5 - target5_prev)>0.01)
+  {
+    dtarget4 = target4 - target4_prev;
+    target4_prev = target4;
 
-      delay(1);
-    } 
-    union {
-      float asFloat;
-      int asInt[2];
-    } flreg;
-    flreg.asFloat = steppers[5].getCurrentDeg();
-    // Serial.println(steppers[5].getCurrentDeg());
-    inputRegisters[STEPPERS_COUNT * 2 - 2] = flreg.asInt[0];
-    inputRegisters[STEPPERS_COUNT * 2 - 1] = flreg.asInt[1];
+    dtarget5 = target5 - target5_prev;
+    target5_prev = target5;
+
+    current4 += dcur4*dtarget4_prev/(dtarget4_prev+dtarget5_prev+0.001);
+    cur4_prev = cur4;
+
+    current5 += dcur5*dtarget5_prev/(-dtarget4_prev+dtarget5_prev+0.001);
+    cur5_prev = cur5;
+
+    dtarget4_prev = dtarget4;
+    dtarget5_prev = dtarget5;
+
+    //if(dtarget4>0 && dtarget5>0)
+    //{
+     steppers[4].setTargetDeg(dtarget4 + dtarget5, RELATIVE);
+     steppers[5].setTargetDeg(-dtarget4 + dtarget5, RELATIVE);
+    //}
+    //else if(dtarget4>0 && dtarget5<0)
+    //{
+    //  steppers[4].setTargetDeg(0, RELATIVE);
+    //  steppers[5].setTargetDeg(dtarget4, RELATIVE);
+    //}
   }
 
   uint16_t input_reg5[2] = {inputRegisters[STEPPERS_COUNT * 2 - 4], inputRegisters[STEPPERS_COUNT * 2 - 3]};
   uint16_t input_reg6[2] = {inputRegisters[STEPPERS_COUNT * 2 - 2], inputRegisters[STEPPERS_COUNT * 2 - 1]};
-  // Serial.println("---------------");
-  // Serial.println(modbus_get_float(input_reg5));
-  // Serial.println(steppers[4].getTargetDeg());
-  // Serial.println(steppers[4].getCurrentDeg());
-  // Serial.println("||");
-  // Serial.println(modbus_get_float(input_reg6));
-  // Serial.println(steppers[5].getTargetDeg());
-  // Serial.println(steppers[5].getCurrentDeg());
-  // Serial.println("---------------");
-  last_action = action;
 
 
   for(int i=0;i<STEPPERS_COUNT;i++)
@@ -347,8 +335,7 @@ void loop()
   union {
     float asFloat;
     int asInt[2];
-  }
-  flreg;
+  } flreg;
   uint16_t position[2];
 
   flreg.asFloat = servo.getCurrentDeg();
