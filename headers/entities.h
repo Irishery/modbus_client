@@ -1,8 +1,5 @@
-#include <cerrno>
-#include <stdio.h>
 #include <modbus.h>
 #include <iostream>
-#include <array>
 #include <math.h>
 
 #define STEPPERS_COUNT 6
@@ -52,7 +49,7 @@ public:
 
 ModbusClient::ModbusClient(const char *port)
 {
-    this->ctx = modbus_new_rtu(port, 115200, 'N', 8, 1);
+    this->ctx = modbus_new_rtu(port, 9600, 'N', 8, 1);
     if (ctx == NULL)
     {
         fprintf(stderr, "Unable to create the libmodbus context\n");
@@ -275,10 +272,12 @@ public:
     Stepper(int id, ModbusClient *client);
 
     void setRotationDegree(float radian);
+    void setRotationDegreeNew(float radian1, float radian2);
     void setMaxSpeed(float rad_per_sec);
     void setAcceleration(float rad_per_sec_sq);
 
     void rotate(float degree);
+    void rotateNew(float degree1, float degree2);
     void brake();
     void reset();
 
@@ -303,7 +302,29 @@ void Stepper::setRotationDegree(float radian)
 
     modbus_set_float(degree, radian_in_uint_format);
 
-    int success = this->client->writeRegisters(this->stepper_id * 2 + STEPPERS_COUNT * 2, radian_in_uint_format, 2); // add 20 because of registers scheme
+    int success = this->client->writeRegisters(this->stepper_id * 2 + STEPPERS_COUNT * 2, radian_in_uint_format, 2);
+    if (success == -1)
+    {
+        fprintf(stderr, "Error writing register: %s\n", modbus_strerror(errno));
+        // std::cout << "Error writing register" << std::endl;
+    }
+};
+
+void Stepper::setRotationDegreeNew(float radian1, float radian2)
+{
+    uint16_t radian_in_uint_format1[2];
+    uint16_t radian_in_uint_format2[2];
+    float degree1 = radiansToDegrees(radian1);
+    float degree2 = radiansToDegrees(radian2);
+
+    modbus_set_float(degree1, radian_in_uint_format1);
+    modbus_set_float(degree2, radian_in_uint_format2);
+
+    uint16_t * result = new uint16_t[4];
+    std::copy(radian_in_uint_format1, radian_in_uint_format1 + 2, result);
+    std::copy(radian_in_uint_format2, radian_in_uint_format2 + 2, result + 2);
+
+    int success = this->client->writeRegisters(this->stepper_id * 2 + STEPPERS_COUNT * 2, result, 4);
     if (success == -1)
     {
         fprintf(stderr, "Error writing register: %s\n", modbus_strerror(errno));
@@ -353,6 +374,24 @@ void Stepper::rotate(float radian)
     }
 };
 
+void Stepper::rotateNew(float degree1, float degree2)
+{
+    this->setRotationDegreeNew(degree1, degree2);
+
+    // int success = this->client->writeBit(this->stepper_id, 1);
+    uint8_t bits[2];
+    // std::fill(bits, bits + 2, 1);
+    bits[0] = 1;
+    bits[1] = 1;
+
+    int success = this->client->writeBits(STEPPERS_COUNT - 2, bits, 2);
+    if (success == -1)
+    {
+        fprintf(stderr, "Error writing bit: %s\n", modbus_strerror(errno));
+        // std::cout << "Error writing bit" << std::endl;
+    }
+};
+
 void Stepper::brake()
 {
     int success = this->client->writeBit(this->stepper_id + STEPPERS_COUNT, 1);
@@ -366,7 +405,7 @@ void Stepper::brake()
 void Stepper::reset()
 {
     // TODO: это костыль, чтобы останавливать двигатель, если в момент вызова калибровки он уже крутился к цели
-    //  Убрать костыль, если получилось мигрировать на GStepper2
+    //  Убрать костыль, если получилось мигрировать на GStepper3
     this->brake();
 
     int success = this->client->writeBit(this->stepper_id + STEPPERS_COUNT * 2, 1);

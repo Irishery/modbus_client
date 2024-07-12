@@ -1,11 +1,6 @@
-#include <cerrno>
-#include <stdio.h>
-#include <modbus.h>
 #include <iostream>
-#include <array>
 #include "entities.h"
-#include <thread>
-// #include <math.h>
+#include <math.h>
 
 int main(void)
 {
@@ -25,14 +20,30 @@ int main(void)
     Stepper steppers[] = {*stepper1, *stepper2, *stepper3, *stepper4, *stepper5, *stepper6};
 
     SteppersGroup *group = new SteppersGroup(client, steppers);
-    group->setMaxSpeedAll(M_PI);
+    group->setMaxSpeedAll(2 * M_PI);
+    // stepper5->setMaxSpeed(M_PI / 2);
+    // stepper6->setMaxSpeed(M_PI / 2);
+    // group->resetAll();
+    // stepper5->reset();
     // group->resetAll();
     // stepper2->rotate(3 * 5);
-    servo->setMaxSpeed(2);
+    // servo->setMaxSpeed(2);
+    // * 4
+    // * 2
+    // stepper5->rotate(0);
+    // stepper6->rotate(-10);
+
+    // stepper5->rotate(-1);
+    // stepper6->rotate(1);
+
+    stepper5->rotateNew(-4, -4);
+    
+
     // servo->setAcceleration(0);
     // 1.74533
     // stepper2->rotate(0);
-    // std::cout << stepper5->getCurrentPosition() << std::endl;
+    std::cout << stepper5->getCurrentPosition() << std::endl;
+    std::cout << stepper6->getCurrentPosition() << std::endl;
     // servo->rotate(1.74533);
     // servo->setPosition(0);
     // sleep(2);
@@ -41,6 +52,6 @@ int main(void)
 
     // float pos = servo->getCurrentPosition();
     // std::cout << servo->getStatus() << std::endl;
-    std::cout << servo->getCurrentPosition() << std::endl;
+    // std::cout << servo->getCurrentPosition() << std::endl;
     // servo->rotate(0);
 }
