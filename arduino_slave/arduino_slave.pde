@@ -66,34 +66,19 @@ float modbus_get_float(const uint16_t *src)
 
 GStepper<STEPPER2WIRE> steppers[] = {stepper1, stepper2, stepper3, stepper4, stepper5, stepper6};
 
-// 2 - rotate
-// 1 - to endstoup
-// 0 - out of endstop
-// -1 - error
-int get_action() {
-  float t5 = steppers[4].getTargetDeg();
-  float t6 = steppers[5].getTargetDeg();
-  if ((t5 == t6) && (t5 != 0)) {
-    return 2; // rotate
-  } else if (t5 == -t6) {
-    return 1; // lean
-  }
-  return -1; // error
-}
 int endstops[] = {ENDSTOP_PIN1, ENDSTOP_PIN2, ENDSTOP_PIN3, ENDSTOP_PIN4, ENDSTOP_PIN5};
 int endstops_type[] = {1, 1, 0, 0, 0}; // we have didffenet endstops models, so there is a need to separate conditions of end
 
-float target4_prev = 0;
+float targetLean_prev = 0;
 float cur4_prev = 0;
-float current4 = 0;
-float target5_prev = 0;
+float currentLean = 0;
+float targetRotate_prev = 0;
 float cur5_prev = 0;
-float current5 = 0;
-float dtarget4 = 0;
-float dtarget5 = 0;
-
-float dtarget4_prev = 0;
-float dtarget5_prev = 0;
+float currentRotate = 0;
+float dtargetLean = 0;
+float dtargetRotate = 0;
+float dtargetLean_prev = 0;
+float dtargetRotate_prev = 0;
 
 void loop() 
 {
@@ -101,14 +86,6 @@ void loop()
     int is_must_run = coils[i];
     int is_must_brake = coils[STEPPERS_COUNT + i];
     int is_must_reset = coils[STEPPERS_COUNT*2 + i]; 
-
-    // float s5t = stepper[4].getTargetDeg();
-    // float s6t = stepper[5].getTargetDeg();
-
-    // int act = get_action();
-    // if (act != -1) {
-    //   steppers[5].tick();
-    // }
 
     if(is_must_brake)
     {
@@ -193,92 +170,66 @@ void loop()
     inputRegisters[float_id + 1] = flreg.asInt[1];
   }
 
-  int action = get_action();
+  ///////////////////////////////////////////
+  // Секция работы с узлом поворота и наклона
+  ///////////////////////////////////////////
 
+  // Получение таргетов
   uint16_t degree[2];
   degree[0] = holdingRegisters[STEPPERS_COUNT*2+8];
   degree[1] = holdingRegisters[STEPPERS_COUNT*2 + 8 + 1];
-  float target4 = modbus_get_float(degree);
+  float targetLean = modbus_get_float(degree);
   degree[0] = holdingRegisters[STEPPERS_COUNT*2+10];
   degree[1] = holdingRegisters[STEPPERS_COUNT*2 + 10 + 1];
-  float target5 = modbus_get_float(degree);
+  float targetRotate = modbus_get_float(degree);
 
+  // Расчет изменения положения
   float cur4 = steppers[4].getCurrentDeg();
   float dcur4 = cur4 - cur4_prev;
-
   float cur5 = steppers[5].getCurrentDeg();
   float dcur5 = cur5 - cur5_prev;
 
-  //current4 + dcur;
+  // Передача изменненного положения
   union {
     float asFloat;
     int asInt[2];
-  } flreg1;
-  flreg1.asFloat = current4 + dtarget4*dcur4/(dtarget4+dtarget5+0.0001);
-  inputRegisters[STEPPERS_COUNT * 2 - 4] = flreg1.asInt[0];
-  inputRegisters[STEPPERS_COUNT * 2 - 3] = flreg1.asInt[1];
-  union {
-    float asFloat;
-    int asInt[2];
-  } flreg2;
-  flreg2.asFloat = current5 + dtarget5*dcur5/(-dtarget4+dtarget5+0.0001);
-  inputRegisters[STEPPERS_COUNT * 2 - 2] = flreg2.asInt[0];
-  inputRegisters[STEPPERS_COUNT * 2 - 1] = flreg2.asInt[1];
+  } floatIntUnion;
+  floatIntUnion.asFloat = currentLean + dtargetLean*dcur4/(dtargetLean+dtargetRotate+0.0001);
+  inputRegisters[STEPPERS_COUNT * 2 - 4] = floatIntUnion.asInt[0];
+  inputRegisters[STEPPERS_COUNT * 2 - 3] = floatIntUnion.asInt[1];
+  floatIntUnion.asFloat = currentRotate + dtargetRotate*dcur5/(-dtargetLean+dtargetRotate+0.0001);
+  inputRegisters[STEPPERS_COUNT * 2 - 2] = floatIntUnion.asInt[0];
+  inputRegisters[STEPPERS_COUNT * 2 - 1] = floatIntUnion.asInt[1];
 
-  /*if (target4 != target4_prev && target5 == target5_prev) 
-  { 
-    float dtarget = target4 - target4_prev;
-    target4_prev = target4;
-    current4 += dcur4;
-    cur4_prev = cur4;
-
-    steppers[4].setTargetDeg(dtarget, RELATIVE);
-    steppers[5].setTargetDeg(-dtarget, RELATIVE);
-  }
-
-  if (target5 != target5_prev && target4 == target4_prev) 
-  { 
-    float dtarget = target5 - target5_prev;
-    target5_prev = target5;
-    current5 += dcur5;
-    cur5_prev = cur5;
-
-    steppers[4].setTargetDeg(dtarget, RELATIVE);
-    steppers[5].setTargetDeg(dtarget, RELATIVE);
-  }*/
-
-  if(abs(target4 - target4_prev)>0.01 && abs(target5 - target5_prev)>0.01)
+  // Расчет и устрановка таргетов на моторы
+  if(abs(targetLean - targetLean_prev)>0.01 || abs(targetRotate - targetRotate_prev)>0.01)
   {
-    dtarget4 = target4 - target4_prev;
-    target4_prev = target4;
+    dtargetLean = targetLean - targetLean_prev;
+    targetLean_prev = targetLean;
 
-    dtarget5 = target5 - target5_prev;
-    target5_prev = target5;
+    dtargetRotate = targetRotate - targetRotate_prev;
+    targetRotate_prev = targetRotate;
 
-    current4 += dcur4*dtarget4_prev/(dtarget4_prev+dtarget5_prev+0.001);
+    currentLean += dcur4*dtargetLean_prev/(dtargetLean_prev+dtargetRotate_prev+0.001);
     cur4_prev = cur4;
 
-    current5 += dcur5*dtarget5_prev/(-dtarget4_prev+dtarget5_prev+0.001);
+    currentRotate += dcur5*dtargetRotate_prev/(-dtargetLean_prev+dtargetRotate_prev+0.001);
     cur5_prev = cur5;
 
-    dtarget4_prev = dtarget4;
-    dtarget5_prev = dtarget5;
+    dtargetLean_prev = dtargetLean;
+    dtargetRotate_prev = dtargetRotate;
 
-    //if(dtarget4>0 && dtarget5>0)
-    //{
-     steppers[4].setTargetDeg(dtarget4 + dtarget5, RELATIVE);
-     steppers[5].setTargetDeg(-dtarget4 + dtarget5, RELATIVE);
-    //}
-    //else if(dtarget4>0 && dtarget5<0)
-    //{
-    //  steppers[4].setTargetDeg(0, RELATIVE);
-    //  steppers[5].setTargetDeg(dtarget4, RELATIVE);
-    //}
+    steppers[4].setTargetDeg(dtargetLean + dtargetRotate, RELATIVE);
+    steppers[5].setTargetDeg(-dtargetLean + dtargetRotate, RELATIVE);
   }
+  
 
   uint16_t input_reg5[2] = {inputRegisters[STEPPERS_COUNT * 2 - 4], inputRegisters[STEPPERS_COUNT * 2 - 3]};
   uint16_t input_reg6[2] = {inputRegisters[STEPPERS_COUNT * 2 - 2], inputRegisters[STEPPERS_COUNT * 2 - 1]};
 
+  /////////////////////////////////////////////////
+  // Конец секции работы с узлом поворота и наклона
+  /////////////////////////////////////////////////
 
   for(int i=0;i<STEPPERS_COUNT;i++)
   {
