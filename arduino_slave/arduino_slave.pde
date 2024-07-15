@@ -15,11 +15,11 @@ const int ENDSTOP_PIN5 = A4;
 #define STEPPERS_COUNT 6
 #define ENDSTOPS_COUNT 5
 
-GStepper<STEPPER2WIRE> stepper1(3200, 8, A6);
+GStepper<STEPPER2WIRE> stepper1(3200, 8, 6);
 GStepper<STEPPER2WIRE> stepper2(3200, 10, 11);
 GStepper<STEPPER2WIRE> stepper3(3200, 12, 13);
 GStepper<STEPPER2WIRE> stepper4(3200, 2, 3);
-GStepper<STEPPER2WIRE> stepper5(3200, 6, 7);
+GStepper<STEPPER2WIRE> stepper5(3200, A6, 7);
 GStepper<STEPPER2WIRE> stepper6(3200, 4, 5);
 
 ServoSmooth servo;
@@ -148,11 +148,15 @@ void loop()
 
       }
       else
-        steppers[i].setTargetDeg(degree_num, ABSOLUTE);
+        steppers[i].setTargetDeg(degree_num);
 
       coils[i] = 0;
     }
   }
+  // Serial.println("-------------------------");
+  // Serial.println(steppers[0].getCurrentDeg());
+  // Serial.println(steppers[0].getTargetDeg());
+  // Serial.println("-------------------------");
 
   for(int i=0;i<STEPPERS_COUNT-2;i++)
   {
@@ -183,13 +187,13 @@ void loop()
   degree[1] = holdingRegisters[STEPPERS_COUNT*2 + 10 + 1];
   float targetRotate = modbus_get_float(degree);
 
-  // Расчет изменения положения
+  // // Расчет изменения положения
   float cur4 = steppers[4].getCurrentDeg();
   float dcur4 = cur4 - cur4_prev;
   float cur5 = steppers[5].getCurrentDeg();
   float dcur5 = cur5 - cur5_prev;
 
-  // Передача изменненного положения
+  // // Передача изменненного положения
   union {
     float asFloat;
     int asInt[2];
@@ -201,7 +205,7 @@ void loop()
   inputRegisters[STEPPERS_COUNT * 2 - 2] = floatIntUnion.asInt[0];
   inputRegisters[STEPPERS_COUNT * 2 - 1] = floatIntUnion.asInt[1];
 
-  // Расчет и устрановка таргетов на моторы
+  // // Расчет и устрановка таргетов на моторы
   if(abs(targetLean - targetLean_prev)>0.01 || abs(targetRotate - targetRotate_prev)>0.01)
   {
     dtargetLean = targetLean - targetLean_prev;
@@ -222,10 +226,6 @@ void loop()
     steppers[4].setTargetDeg(dtargetLean + dtargetRotate, RELATIVE);
     steppers[5].setTargetDeg(-dtargetLean + dtargetRotate, RELATIVE);
   }
-  
-
-  uint16_t input_reg5[2] = {inputRegisters[STEPPERS_COUNT * 2 - 4], inputRegisters[STEPPERS_COUNT * 2 - 3]};
-  uint16_t input_reg6[2] = {inputRegisters[STEPPERS_COUNT * 2 - 2], inputRegisters[STEPPERS_COUNT * 2 - 1]};
 
   /////////////////////////////////////////////////
   // Конец секции работы с узлом поворота и наклона
@@ -233,8 +233,6 @@ void loop()
 
   for(int i=0;i<STEPPERS_COUNT;i++)
   {
-    // steppers[5].tick();
-    // stepper6.tick();
     steppers[i].tick();
     if (steppers[i].getState()) 
     {

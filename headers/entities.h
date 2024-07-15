@@ -475,7 +475,9 @@ public:
 
     void setMaxSpeedAll(float rad_per_sec);
     void setAccelerationAll(float rad_per_sec);
+    void setRotationDegreeAll(float s1, float s2, float s3, float s4, float s5, float s6);
 
+    void rotateAll(float s1, float s2, float s3, float s4, float s5, float s6);
     void breakAll();
     void resetAll();
 
@@ -550,7 +552,7 @@ void SteppersGroup::breakAll()
 void SteppersGroup::resetAll()
 {
     // TODO: это костыль, чтобы останавливать двигатель, если в момент вызова калибровки он уже крутился к цели
-    //  Убрать костыль, если получилось мигрировать на GStepper2
+    //  Убрать костыль, если получилось мигрировать на GStepper3
     this->breakAll();
 
     uint8_t bits[STEPPERS_COUNT];
@@ -565,38 +567,112 @@ void SteppersGroup::resetAll()
     }
 };
 
-float *SteppersGroup::getCurrentPositionAll()
+float *SteppersGroup::getLastTargetDegreeAll()
 {
-    float *current_positions = new float[STEPPERS_COUNT];
+    float *degrees = new float[STEPPERS_COUNT];
+    uint16_t *degrees_regs = this->client->readRegisters(STEPPERS_COUNT*2, STEPPERS_COUNT*2);
 
-    for (int i = 0; i < STEPPERS_COUNT; i++)
+    for (int i = 0; i < STEPPERS_COUNT*2; i+=2)
     {
-        current_positions[i] = this->steppers[i]->getCurrentPosition();
+        uint16_t degree[2];
+        degree[0] = degrees_regs[i];
+        degree[1] = degrees_regs[i+1];
+
+        degrees[i/2] = modbus_get_float(degree);
     }
 
-    return current_positions;
+    return degrees;
 };
 
 float *SteppersGroup::getCurrentSpeedAll()
 {
-    float *current_speeds = new float[STEPPERS_COUNT];
+    float *speeds = new float[STEPPERS_COUNT];
+    uint16_t *speeds_regs = this->client->readRegisters(0, STEPPERS_COUNT*2);
 
-    for (int i = 0; i < STEPPERS_COUNT; i++)
+    for (int i = 0; i < STEPPERS_COUNT*2; i+=2)
     {
-        current_speeds[i] = this->steppers[i]->getCurrentSpeed();
+        uint16_t speed[2];
+        speed[0] = speeds_regs[i];
+        speed[1] = speeds_regs[i+1];
+
+        speeds[i/2] = modbus_get_float(speed);
     }
 
-    return current_speeds;
+    return speeds;
 };
 
 float *SteppersGroup::getCurrentAccelerationAll()
 {
-    float *current_accelerations = new float[STEPPERS_COUNT];
+    float *accelerations = new float[STEPPERS_COUNT];
+    uint16_t *accelerations_regs = this->client->readRegisters(STEPPERS_COUNT*4, STEPPERS_COUNT*2);
 
-    for (int i = 0; i < STEPPERS_COUNT; i++)
+    for (int i = 0; i < STEPPERS_COUNT*2; i+=2)
     {
-        current_accelerations[i] = this->steppers[i]->getCurrentAcceleration();
+        uint16_t acceleration[2];
+        acceleration[0] = accelerations_regs[i];
+        acceleration[1] = accelerations_regs[i+1];
+
+        accelerations[i/2] = modbus_get_float(acceleration);
     }
 
-    return current_accelerations;
+    return accelerations;
+};
+
+float *SteppersGroup::getCurrentPositionAll()
+{
+    float *positions = new float[STEPPERS_COUNT];
+    uint16_t *positions_regs = this->client->readInputRegisters(0, STEPPERS_COUNT*2);
+    for (int i = 0; i < STEPPERS_COUNT*2; i+=2)
+    {
+        uint16_t position[2];
+        position[0] = positions_regs[i];
+        position[1] = positions_regs[i+1];
+
+        positions[i/2] = modbus_get_float(position);
+    }
+
+    return positions;
+};
+
+void SteppersGroup::setRotationDegreeAll(float s1, float s2, float s3, float s4, float s5, float s6)
+{
+    uint16_t degrees_in_uint_format[STEPPERS_COUNT * 2];
+
+    modbus_set_float(s1, degrees_in_uint_format);
+    modbus_set_float(s2, degrees_in_uint_format + 2);
+    modbus_set_float(s3, degrees_in_uint_format + 4);
+    modbus_set_float(s4, degrees_in_uint_format + 6);
+    modbus_set_float(s5, degrees_in_uint_format + 8);
+    modbus_set_float(s6, degrees_in_uint_format + 10);
+
+    int success = this->client->writeRegisters(STEPPERS_COUNT * 2, degrees_in_uint_format, 2 * STEPPERS_COUNT);
+
+    if (success == -1)
+    {
+        std::cout << "Error writing register" << std::endl;
+    }
+};
+
+
+void SteppersGroup::rotateAll(float s1, float s2, float s3, float s4, float s5, float s6)
+{
+    float s1_rad = radiansToDegrees(s1);
+    float s2_rad = radiansToDegrees(s2);
+    float s3_rad = radiansToDegrees(s3);
+    float s4_rad = radiansToDegrees(s4);
+    float s5_rad = radiansToDegrees(s5);
+    float s6_rad = radiansToDegrees(s6);
+
+
+    this->setRotationDegreeAll(s1_rad, s2_rad, s3_rad, s4_rad, s5_rad, s6_rad);
+
+    uint8_t bits[STEPPERS_COUNT];
+    std::fill(bits, bits + STEPPERS_COUNT, 1);
+
+    int success = this->client->writeBits(0, bits, STEPPERS_COUNT);
+
+    if (success == -1)
+    {
+        fprintf(stderr, "Error writing bit: %s\n", modbus_strerror(errno));
+    }
 };
