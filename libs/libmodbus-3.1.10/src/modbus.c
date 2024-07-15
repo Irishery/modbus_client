@@ -1292,6 +1292,12 @@ static int read_registers(modbus_t *ctx, int function, int addr, int nb, uint16_
     }
 
     req_length = ctx->backend->build_request_basis(ctx, function, addr, nb, req);
+    // printf("len %d\n", req_length);
+
+    // printf("read regs\n");
+    // for (int i = 0; i < req_length; i++) {
+    //     printf(" %02X\n", req[i]);
+    // };
 
     rc = send_msg(ctx, req, req_length);
     if (rc > 0) {
@@ -1369,6 +1375,7 @@ int modbus_read_input_registers(modbus_t *ctx, int addr, int nb, uint16_t *dest)
 
 /* Write a value to the specified register of the remote device.
    Used by write_bit and write_register */
+// TODO:
 static int write_single(modbus_t *ctx, int function, int addr, const uint16_t value)
 {
     int rc;
@@ -1386,6 +1393,12 @@ static int write_single(modbus_t *ctx, int function, int addr, const uint16_t va
     if (rc > 0) {
         /* Used by write_bit and write_register */
         uint8_t rsp[MAX_MESSAGE_LENGTH];
+
+        printf("Req\n");
+        for (int i = 0; i < req_length; i++) {
+            printf("%02X ", req[i]);
+        }
+        printf("\n");
 
         rc = _modbus_receive_msg(ctx, rsp, MSG_CONFIRMATION);
         if (rc == -1)
@@ -1469,13 +1482,20 @@ int modbus_write_bits(modbus_t *ctx, int addr, int nb, const uint8_t *src)
     }
 
     rc = send_msg(ctx, req, req_length);
+
+    printf("Req\n");
+    for (i = 0; i < req_length; i++) {
+        printf("%02X ", req[i]);
+    }
+    printf("\n");
+    
     if (rc > 0) {
         uint8_t rsp[MAX_MESSAGE_LENGTH];
 
         rc = _modbus_receive_msg(ctx, rsp, MSG_CONFIRMATION);
-        if (rc == -1)
+        if (rc == -1) {
             return -1;
-
+        }
         rc = check_confirmation(ctx, req, rsp, rc);
     }
 
@@ -1527,6 +1547,12 @@ int modbus_write_registers(modbus_t *ctx, int addr, int nb, const uint16_t *src)
 
         rc = check_confirmation(ctx, req, rsp, rc);
     }
+
+    printf("Req\n");
+    for (i = 0; i < req_length; i++) {
+        printf("%02X ", req[i]);
+    }
+    printf("\n");
 
     return rc;
 }
